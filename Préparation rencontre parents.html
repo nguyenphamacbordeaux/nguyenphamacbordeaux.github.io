@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion RPP - Mathématiques</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; background-color: #f0f2f5; }
+        .container { max-width: 100%; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; }
+        
+        #liveClock { float: left; font-size: 1.4em; font-weight: bold; color: #1a73e8; background: #e8f0fe; padding: 8px 15px; border-radius: 10px; border: 2px solid #1a73e8; margin-right: 20px; }
+        
+        .header-title { overflow: hidden; margin-bottom: 20px; text-align: center; }
+        h2 { color: #2c3e50; margin: 0; padding-bottom: 10px; text-transform: uppercase; border-bottom: 2px solid #3498db; }
+        
+        .info-header { font-size: 1.1em; color: #555; display: flex; gap: 15px; justify-content: center; margin-top: 5px; }
+        .info-header input { border: none; border-bottom: 1px dashed #3498db; font-size: 1em; color: #1a73e8; font-weight: bold; width: 150px; outline: none; text-align: center; }
+
+        .setup-bar { background: #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .hidden-config { display: none !important; }
+        
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; background: white; }
+        th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; }
+        th { background-color: #3498db; color: white; font-size: 0.85em; }
+        
+        .col-check { width: 20px; }
+        .col-drag { width: 20px; }
+        .col-time { width: 110px; }
+        .col-name { width: 250px; text-align: left; }
+        .col-note { width: 50px; }
+        
+        tr.draggable { cursor: move; }
+        tr.seen { background-color: #f8f9fa; color: #adb5bd; }
+        
+        .time-column { width: 70px; font-weight: bold; border: 1px solid #ddd; border-radius: 4px; text-align: center; }
+        .is-locked { background-color: #e6f7ff !important; color: #0050b3; }
+        
+        .lock-btn { cursor: pointer; font-size: 12px; border: none; background: none; opacity: 0.2; }
+        .lock-btn.active { opacity: 1; color: #1890ff; }
+
+        .btn-delete { color: #ccc; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .btn-delete:hover { color: #ff4d4f; }
+        
+        .remarque-input { width: 95%; padding: 4px; border: 1px solid #eee; border-radius: 3px; font-size: 0.9em; }
+        
+        .btn-action { padding: 8px 12px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; }
+        .btn-print { background: #27ae60; color: white; }
+        .btn-export { background: #f39c12; color: white; }
+        .btn-import { background: #9b59b6; color: white; }
+        .btn-toggle-config { background: #7f8c8d; color: white; margin-left: auto; }
+
+        /* --- CONFIGURATION IMPRESSION --- */
+        @media print {
+            @page { margin: 1cm 1.5cm; }
+            body { background: white; }
+            .setup-bar, .btn-delete, .lock-btn, .col-drag, 
+            th:nth-child(2), td:nth-child(2), .btn-action, 
+            #liveClock, #showConfigBtn {
+                display: none !important;
+            }
+            .container { box-shadow: none; border: none; padding: 0; }
+            h2 { border-bottom: 2px solid black; }
+            .info-header input { border: none; width: auto; }
+            .remarque-input { border: 1px solid #eee; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="liveClock">00:00:00</div>
+    <div class="header-title">
+        <h2>Rencontre parents professeur</h2>
+        <div class="info-header">
+            <span>Classe : <input type="text" id="inputClasse" placeholder="... (ex: 2nde 1)"></span>
+            <span>Date : <input type="text" id="currentDate"></span>
+        </div>
+    </div>
+    
+    <div id="configBar" class="setup-bar">
+        <div><label>Notes des élèves : </label><input type="file" id="csvFile" accept=".csv"></div>
+        <div><label>Début : </label><input type="time" id="startTime" value="17:00"></div>
+        <div><label>Pas : </label><input type="number" id="stepMinutes" value="5" min="1" style="width: 40px;"> min</div>
+        
+        <button class="btn-action btn-export" onclick="exportData()">💾 Sauvegarder</button>
+        <button class="btn-action btn-import" onclick="document.getElementById('importFile').click()">📂 Charger</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+        
+        <button class="btn-action btn-print" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="btn-action btn-toggle-config" onclick="toggleConfig()">Masquer réglages</button>
+    </div>
+
+    <button id="showConfigBtn" class="btn-action" style="display:none; position:fixed; bottom:10px; right:10px; background:#7f8c8d; color:white; opacity:0.8" onclick="toggleConfig()">⚙️ Réglages</button>
+
+    <div id="resultat"></div>
+</div>
+
+<script>
+let dragSrcEl = null;
+
+function updateClock() { document.getElementById('liveClock').textContent = new Date().toLocaleTimeString('fr-FR'); }
+setInterval(updateClock, 1000);
+updateClock();
+document.getElementById('currentDate').value = new Date().toLocaleDateString('fr-FR');
+
+function toggleConfig() {
+    const bar = document.getElementById('configBar');
+    const btn = document.getElementById('showConfigBtn');
+    bar.classList.toggle('hidden-config');
+    btn.style.display = bar.classList.contains('hidden-config') ? 'block' : 'none';
+}
+
+function exportData() {
+    const rows = document.querySelectorAll('#sortableTable tr');
+    const data = {
+        classe: document.getElementById('inputClasse').value,
+        date: document.getElementById('currentDate').value,
+        startTime: document.getElementById('startTime').value,
+        step: document.getElementById('stepMinutes').value,
+        eleves: []
+    };
+    rows.forEach(row => {
+        data.eleves.push({
+            vu: row.querySelector('.check-seen')?.checked,
+            heure: row.querySelector('.time-column').value,
+            locked: row.querySelector('.lock-btn').classList.contains('active'),
+            nom: row.querySelector('.col-name b').textContent,
+            n5: row.cells[4].textContent,
+            n10: row.cells[5].textContent,
+            n20: row.cells[6].textContent,
+            remProf: row.querySelectorAll('.remarque-input')[0].value,
+            remPar: row.querySelectorAll('.remarque-input')[1].value
+        });
+    });
+    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `RPP_${data.classe || 'Sauvegarde'}.json`;
+    a.click();
+}
+
+function importData(input) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = JSON.parse(e.target.result);
+        document.getElementById('inputClasse').value = data.classe;
+        document.getElementById('currentDate').value = data.date;
+        document.getElementById('startTime').value = data.startTime;
+        document.getElementById('stepMinutes').value = data.step;
+        renderTable(data.eleves);
+    };
+    reader.readAsText(input.files[0]);
+}
+
+document.getElementById('csvFile').addEventListener('change', function(e) {
+    const reader = new FileReader();
+    reader.onload = function(event) { processCSV(event.target.result); };
+    reader.readAsText(e.target.files[0]);
+});
+
+function processCSV(csvText) {
+    const lines = csvText.split(/\r?\n/);
+    if (lines.length < 3) return;
+    const headerScales = lines[1].split(';');
+    const eleves = [];
+    for (let i = 2; i < lines.length; i++) {
+        if (lines[i].trim() === "" || lines[i].includes("Moyenne de classe")) continue;
+        const cells = lines[i].split(';');
+        const nom = cells[0].replace(/"/g, '');
+        let n5=[], n10=[], n20=[];
+        for (let j=3; j<cells.length; j++) {
+            let val = cells[j].replace(/"/g, '').replace(',', '.').trim();
+            let v = parseFloat(val);
+            if (!isNaN(v)) {
+                let s = headerScales[j];
+                if (s.includes('/5')) n5.push(v);
+                else if (s.includes('/10')) n10.push(v);
+                else if (s.includes('/20') || s.includes('2')) n20.push(v);
+            }
+        }
+        const m = (a) => a.length > 0 ? (a.reduce((x,y)=>x+y,0)/a.length).toFixed(1) : '-';
+        eleves.push({ nom, n5: m(n5), n10: m(n10), n20: m(n20), vu: false, locked: false, remProf: '', remPar: '' });
+    }
+    renderTable(eleves);
+}
+
+function renderTable(eleves) {
+    let html = '<table><thead><tr><th class="col-check">Vu</th><th class="col-drag"></th><th class="col-time">Heure</th><th class="col-name">Élève</th><th class="col-note">L/5</th><th class="col-note">A/10</th><th class="col-note">DS/20</th><th>Remarques Professeur</th><th>Remarques Parents</th></tr></thead><tbody id="sortableTable">';
+    eleves.forEach(e => {
+        html += `<tr class="draggable ${e.vu ? 'seen' : ''}" draggable="true">
+            <td><input type="checkbox" class="check-seen" ${e.vu ? 'checked' : ''} onclick="this.closest('tr').classList.toggle('seen')"></td>
+            <td style="color:#ddd; font-size:10px">☰</td>
+            <td>
+                <div class="time-container">
+                    <input type="time" class="time-column ${e.locked ? 'is-locked' : ''}" value="${e.heure || ''}" onchange="lockAndTime(this)">
+                    <button class="lock-btn ${e.locked ? 'active' : ''}" onclick="toggleLock(this)">🔒</button>
+                </div>
+            </td>
+            <td class="col-name">
+                <span class="btn-delete" onclick="this.closest('tr').remove(); calculatePlanning();">×</span>
+                <b>${e.nom}</b>
+            </td>
+            <td>${e.n5}</td><td>${e.n10}</td><td>${e.n20}</td>
+            <td><input type="text" class="remarque-input" value="${e.remProf}"></td>
+            <td><input type="text" class="remarque-input" value="${e.remPar}"></td>
+        </tr>`;
+    });
+    document.getElementById('resultat').innerHTML = html + '</tbody></table>';
+    addDragAndDropHandlers();
+    calculatePlanning();
+}
+
+function calculatePlanning() {
+    const rows = document.querySelectorAll('#sortableTable tr');
+    const step = parseInt(document.getElementById('stepMinutes').value);
+    let lastTime = document.getElementById('startTime').value;
+    rows.forEach((row) => {
+        const input = row.querySelector('.time-column');
+        const lockBtn = row.querySelector('.lock-btn');
+        if (lockBtn && lockBtn.classList.contains('active')) { lastTime = input.value; }
+        else if (input) { input.value = lastTime; }
+        let [h, m] = lastTime.split(':').map(Number);
+        let date = new Date(); date.setHours(h, m + step);
+        lastTime = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+    });
+}
+
+function lockAndTime(input) { input.nextElementSibling.classList.add('active'); input.classList.add('is-locked'); calculatePlanning(); }
+function toggleLock(btn) { btn.classList.toggle('active'); btn.previousElementSibling.classList.toggle('is-locked'); calculatePlanning(); }
+
+function addDragAndDropHandlers() {
+    const container = document.getElementById('resultat');
+    container.addEventListener('dragover', e => { e.preventDefault(); const t = e.target.closest('tr'); if (t && t !== dragSrcEl) t.classList.add('over'); });
+    container.addEventListener('dragleave', e => { const t = e.target.closest('tr'); if (t) t.classList.remove('over'); });
+    container.addEventListener('dragstart', e => { dragSrcEl = e.target.closest('tr'); });
+    container.addEventListener('drop', e => {
+        e.preventDefault();
+        const t = e.target.closest('tr');
+        if (t && dragSrcEl !== t) {
+            const list = document.getElementById('sortableTable');
+            const all = Array.from(list.querySelectorAll('tr'));
+            if (all.indexOf(dragSrcEl) < all.indexOf(t)) t.after(dragSrcEl);
+            else t.before(dragSrcEl);
+            calculatePlanning();
+        }
+        document.querySelectorAll('tr').forEach(r => r.classList.remove('over'));
+    });
+}
+</script>
+</body>
+</html>

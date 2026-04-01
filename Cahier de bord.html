@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Cahier de bord - Nguyen PHAM</title>
+    <style>
+        :root {
+            --primary: #2c3e50; --secondary: #34495e; --accent: #3498db;
+            --light: #ecf0f1; --danger: #e74c3c; --success: #2ecc71;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: #f4f7f6; color: #333; }
+
+        /* Sidebar */
+        #sidebar {
+            width: 300px; background: var(--primary); color: white; padding: 20px;
+            transition: 0.3s; overflow-y: auto; z-index: 100;
+        }
+        #sidebar.hidden { margin-left: -300px; }
+        
+        .menu-toggle {
+            position: fixed; left: 10px; top: 10px; z-index: 101;
+            cursor: pointer; background: var(--accent); border: none; color: white; padding: 8px; border-radius: 4px;
+        }
+
+        /* Slots */
+        .slots-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 15px 0; }
+        .slot-container { 
+            display: flex; align-items: center; gap: 10px; 
+            padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.05);
+            cursor: move;
+        }
+        .slot-container.dragging { opacity: 0.4; border: 1px dashed #fff; }
+        
+        /* Nouveau Sélecteur de couleur (Liste) */
+        .color-selector {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 2px;
+            cursor: pointer;
+            width: 40px;
+        }
+
+        .slot { 
+            flex-grow: 1; padding: 10px; background: var(--secondary); border: 1px solid #456; 
+            text-align: left; cursor: pointer; font-size: 0.85em; border-radius: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #bdc3c7;
+        }
+        .slot.filled { border-left: 4px solid var(--success); background: #1a252f; color: white; font-weight: bold; }
+        
+        .btn-clear-slot { color: #7f8c8d; cursor: pointer; padding: 5px; font-size: 1.2em; background: none; border: none; }
+        .btn-clear-slot:hover { color: var(--danger); }
+        
+        /* Table */
+        #main { flex: 1; overflow: auto; padding: 40px; position: relative; }
+        h2#classeTitle { display: inline-block; min-width: 200px; padding: 5px; border-bottom: 2px dashed var(--accent); outline: none; margin-top: 0; }
+        
+        table { border-collapse: collapse; background: white; width: 100%; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px; }
+        th, td { border: 1px solid #eee; padding: 10px; position: relative; }
+        th { background: #fdfdfd; text-align: left; cursor: move; user-select: none; font-size: 0.9em; color: #7f8c8d; }
+        
+        /* Style spécifique pour le compteur d'élèves */
+        .count-badge { background: var(--accent); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.8em; margin-left: 5px; }
+
+        td:focus { outline: 2px solid var(--accent); background: #f0f7ff; }
+
+        .btn-del-col, .btn-del-row { color: #ccc; cursor: pointer; border: none; background: none; font-size: 1.1em; }
+        .btn-del-col:hover, .btn-del-row:hover { color: var(--danger); }
+        
+        .row-action { opacity: 0; text-align: center; width: 30px; }
+        tr:hover .row-action { opacity: 1; }
+
+        .add-col-fast { background: #f8f9fa; color: var(--accent); cursor: pointer; text-align: center; font-weight: bold; width: 40px; border: 1px dashed #ddd; }
+        .add-row-btn { margin-top: 10px; padding: 10px 20px; background: var(--success); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .add-row-btn:hover { background: #27ae60; }
+
+        .eleve-cell { display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+        .eleve-name { flex-grow: 1; outline: none; padding: 2px; }
+        
+        .btn-info { cursor: pointer; color: var(--accent); opacity: 0.3; font-size: 0.8em; border: 1px solid #ccc; padding: 0 4px; border-radius: 3px; }
+        tr:hover .btn-info { opacity: 1; }
+
+        .btn-side { display: block; width: 100%; padding: 10px; margin: 5px 0; background: var(--secondary); border: none; color: white; cursor: pointer; text-align: left; border-radius: 4px; font-size: 0.9em; }
+        .btn-side:hover { background: #3e5871; }
+        .btn-main-action { background: var(--accent); font-weight: bold; }
+
+        /* Modal & Fiches */
+        #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 12px; z-index: 1000; width: 650px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        .fiche-row { display: flex; justify-content: space-between; margin: 5px 0; padding: 8px; border-bottom: 1px solid #eee; align-items: center; cursor: grab; background: white; }
+        .fiche-row.dragging { opacity: 0.5; background: #eef; }
+        
+        .editable-label { font-weight: bold; color: var(--primary); outline: none; min-width: 140px; }
+        .editable-val { color: #333; outline: none; flex-grow: 1; margin-left: 10px; border-bottom: 1px transparent solid; }
+        .editable-val:focus { border-bottom-color: var(--accent); }
+
+        .photo-space { width: 35mm; height: 45mm; border: 1px dashed #ccc; float: right; display: flex; align-items: center; justify-content: center; color: #ccc; margin-left: 15px; }
+
+        @media print {
+            @page { size: auto; margin: 15mm; }
+            .no-print, button, .btn-info, .btn-del-row, .btn-del-col, #sidebar, 
+            .menu-toggle, .row-action, .add-col-fast, #overlay, #modal, .add-row-btn, select { display: none !important; }
+            body { background: white; display: block; height: auto; }
+            #main { padding: 0; margin: 0; width: 100%; overflow: visible; }
+            body.print-liste #tableView { display: block !important; }
+            body.print-liste #allFichesPrintView { display: none !important; }
+            body.print-liste table { border: 1px solid #000; width: 100%; }
+            body.print-liste th, body.print-liste td { border: 1px solid #000 !important; color: black; }
+            body.print-fiches #tableView { display: none !important; }
+            body.print-fiches #allFichesPrintView { display: block !important; }
+            .print-break { page-break-after: always; position: relative; clear: both; padding-top: 20px; }
+            .fiche-print { border: none !important; width: 100%; color: black; display: block; overflow: hidden; margin-bottom: 30px; }
+            .photo-space { display: flex !important; border: 1px solid #000 !important; visibility: visible !important; }
+            .fiche-row { border-bottom: 1px solid #000; display: flex !important; }
+        }
+        #allFichesPrintView { display: none; }
+    </style>
+</head>
+<body>
+
+<button class="menu-toggle no-print" onclick="toggleSidebar()">☰</button>
+
+<div id="sidebar" class="no-print">
+    <h3>Configuration</h3>
+    <button class="btn-side btn-main-action" onclick="document.getElementById('csvFile').click()">📂 Importer Nouveau CSV</button>
+    <input type="file" id="csvFile" accept=".csv" style="display:none">
+    
+    <button class="btn-side" style="background: var(--success);" onclick="exportToCSV()">📊 Exporter la classe (CSV)</button>
+
+    <div id="csvColArea" style="display:none; margin: 15px 0; padding: 10px; background: #1a252f; border-radius: 4px;">
+        <label style="font-size: 0.75em; color: #bdc3c7;">Données CSV disponibles :</label>
+        <select id="csvDropdown" style="width:100%; padding:5px; margin-top:5px;" onchange="addSelectedCsvColumn()">
+            <option value="">-- Ajouter --</option>
+        </select>
+    </div>
+
+    <hr style="opacity:0.1">
+    <h4>Classes en Mémoire</h4>
+    <div class="slots-grid" id="slotsContainer"></div>
+
+    <hr style="opacity:0.1">
+    <button class="btn-side" onclick="exportFullDatabaseJSON()">📤 Sauvegarder TOUT (.json)</button>
+    <button class="btn-side" onclick="document.getElementById('fullJsonInput').click()">📥 Restaurer TOUT (.json)</button>
+    <input type="file" id="fullJsonInput" accept=".json" style="display:none" onchange="importFullDatabaseJSON(event)">
+
+    <hr style="opacity:0.1">
+    <button class="btn-side" onclick="printListe()">🖨️ Imprimer la liste</button>
+	<button class="btn-side" style="background: #9b59b6;" onclick="exportToLatex()">📄 Exporter en LaTeX (.tex)</button>
+    <button class="btn-side" onclick="printAllFiches()">🖨️ Imprimer toutes les fiches</button>
+	<button class="btn-side" style="background: #e67e22;" onclick="exportAllFichesToLatex()">📇 Fiches en LaTeX (.tex)</button>
+</div>
+
+<div id="main">
+    <div id="tableView">
+        <h2 id="classeTitle" contenteditable="true" onblur="state.title = this.innerText; updateSlotLabels()">Nouvelle Classe</h2>
+        <table id="mainTable">
+            <thead><tr id="headerRow"></tr></thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <button class="add-row-btn no-print" onclick="addNewStudent()">+ Ajouter un élève</button>
+    </div>
+    <div id="allFichesPrintView"></div>
+</div>
+
+<div id="overlay" class="no-print" onclick="closeModal()"></div>
+<div id="modal" class="no-print">
+    <div id="studentDetailView"></div>
+    <div class="no-print" style="padding: 10px; background: #f9f9f9; border-radius: 8px; margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">
+        <button class="btn-side" style="background: var(--primary); flex: 1;" onclick="addNewFieldToFiches()">+ Ajouter champ global</button>
+    </div>
+    <hr style="opacity:0.1">
+    <div class="no-print" style="display:flex; justify-content: flex-end; gap: 10px;">
+        <button onclick="printSingleFiche()" style="padding:8px 15px; cursor:pointer; background: var(--accent); color:white; border:none; border-radius:4px;">Imprimer cette fiche</button>
+        <button onclick="closeModal()" style="padding:8px 15px; cursor:pointer; background: #eee; border:none; border-radius:4px;">Fermer</button>
+    </div>
+</div>
+
+<script>
+    let state = {
+        title: "Nouvelle Classe",
+        headers: ["Élèves"],
+        currentData: [],
+        csvHeaderNames: []
+    };
+
+    const SLOT_COLORS = [
+        { name: "Sombre", val: "#34495e" },
+        { name: "Bleu", val: "#3498db" },
+        { name: "Vert", val: "#27ae60" },
+        { name: "Rouge", val: "#c0392b" },
+        { name: "Orange", val: "#d35400" },
+        { name: "Violet", val: "#8e44ad" },
+        { name: "Gris", val: "#7f8c8d" }
+    ];
+
+    let currentStudentIdx = null;
+    let draggedCol = null;
+
+    // --- LOGIQUE IMPRESSION ---
+    function printListe() {
+        document.body.classList.add('print-liste');
+        document.body.classList.remove('print-fiches');
+        window.print();
+    }
+
+    function printSingleFiche() {
+        document.body.classList.add('print-fiches');
+        document.body.classList.remove('print-liste');
+        const printView = document.getElementById('allFichesPrintView');
+        const s = state.currentData[currentStudentIdx];
+        let fieldsHtml = Object.keys(s._full).map(key => `
+            <div class="fiche-row"><span class="editable-label">${key}</span><span class="editable-val">${s._full[key]}</span></div>
+        `).join('');
+        printView.innerHTML = `<div class="fiche-print"><div class="photo-space">PHOTO</div><h2>${s.Élèves}</h2><p>Classe : ${state.title}</p><hr><div>${fieldsHtml}</div></div>`;
+        window.print();
+        printView.innerHTML = '';
+    }
+
+    function printAllFiches() {
+        document.body.classList.add('print-fiches');
+        document.body.classList.remove('print-liste');
+        const printView = document.getElementById('allFichesPrintView');
+        printView.innerHTML = state.currentData.map(s => {
+            let fieldsHtml = Object.keys(s._full).map(key => `<div class="fiche-row"><span class="editable-label">${key}</span><span class="editable-val">${s._full[key]}</span></div>`).join('');
+            return `<div class="print-break"><div class="fiche-print"><div class="photo-space">PHOTO</div><h2>${s.Élèves}</h2><p>Classe : ${state.title}</p><hr><div>${fieldsHtml}</div></div></div>`;
+        }).join('');
+        window.print();
+        printView.innerHTML = '';
+    }
+
+    // --- GESTION CSV & TABLEAU ---
+    document.getElementById('csvFile').onchange = function(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const lines = ev.target.result.split(/\r?\n/).filter(line => line.trim() !== "");
+            const newCsvData = lines.map(line => line.split(';').map(cell => cell.replace(/^["']|["']$/g, '').trim()));
+            const newHeaders = newCsvData[0];
+            state.csvHeaderNames = newHeaders;
+            const classIdx = newHeaders.indexOf("Classe");
+            if(classIdx !== -1 && newCsvData[1]) {
+                state.title = newCsvData[1][classIdx];
+                document.getElementById('classeTitle').innerText = state.title;
+            }
+            state.currentData = newCsvData.slice(1).map(row => {
+                let obj = { "_full": {} };
+                newHeaders.forEach((h, i) => { obj._full[h] = row[i]; });
+                state.headers.forEach(h => {
+                    const idxInCsv = newHeaders.indexOf(h);
+                    if (idxInCsv !== -1) obj[h] = row[idxInCsv];
+                    else if (h === "Élèves") obj["Élèves"] = row[0];
+                    else obj[h] = "";
+                });
+                return obj;
+            });
+            sortStudentsAlphabetically();
+            updateCsvMenu(); renderTable();
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+
+    function sortStudentsAlphabetically() {
+        state.currentData.sort((a, b) => {
+            const nameA = (a["Élèves"] || "").toUpperCase();
+            const nameB = (b["Élèves"] || "").toUpperCase();
+            return nameA.localeCompare(nameB);
+        });
+    }
+
+    function renderTable() {
+        const thead = document.getElementById('headerRow');
+        const tbody = document.getElementById('tableBody');
+        thead.innerHTML = ''; tbody.innerHTML = '';
+        
+        state.headers.forEach((h, i) => {
+            const th = document.createElement('th');
+            th.draggable = true;
+            
+            // Logique du compteur sur la première colonne
+            if(i === 0) {
+                th.innerHTML = `<span>${h}</span> <span class="count-badge">${state.currentData.length}</span>`;
+            } else {
+                th.innerHTML = `<span contenteditable="true" onblur="renameHeader(${i}, this.innerText)">${h}</span><span class="btn-del-col no-print" onclick="deleteCol(${i})">×</span>`;
+            }
+
+            th.addEventListener('dragstart', () => { draggedCol = i; });
+            th.addEventListener('dragover', (e) => e.preventDefault());
+            th.addEventListener('drop', () => {
+                const temp = state.headers.splice(draggedCol, 1)[0];
+                state.headers.splice(i, 0, temp); renderTable();
+            });
+            thead.appendChild(th);
+        });
+        
+        const thAdd = document.createElement('th'); 
+        thAdd.className = "add-col-fast no-print"; thAdd.innerHTML = "+"; 
+        thAdd.onclick = () => { state.headers.push("Nouvelle Col"); renderTable(); };
+        thead.appendChild(thAdd);
+
+        state.currentData.forEach((row, rIdx) => {
+            const tr = document.createElement('tr');
+            state.headers.forEach((h, cIdx) => {
+                const td = document.createElement('td');
+                if(h === "Élèves") {
+                    td.innerHTML = `
+                        <div class="eleve-cell">
+                            <span class="eleve-name" contenteditable="true" onblur="updateStudentName(${rIdx}, this.innerText)">${row[h] || ''}</span>
+                            <span class="btn-info no-print" onclick="showStudent(${rIdx})">info</span>
+                        </div>`;
+                } else { 
+                    td.contentEditable = true; 
+                    td.innerText = row[h] || ""; 
+                    td.onblur = () => { row[h] = td.innerText; };
+                    td.addEventListener('keydown', (e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            const nextRow = e.shiftKey ? tr.previousElementSibling : tr.nextElementSibling;
+                            if (nextRow) nextRow.cells[cIdx].focus();
+                        }
+                    });
+                }
+                tr.appendChild(td);
+            });
+            const tdAction = document.createElement('td'); 
+            tdAction.className = "row-action no-print"; 
+            tdAction.innerHTML = `<span class="btn-del-row" onclick="deleteRow(${rIdx})">×</span>`;
+            tr.appendChild(tdAction); tbody.appendChild(tr);
+        });
+    }
+
+    function renameHeader(i, newName) {
+        const oldName = state.headers[i];
+        state.headers[i] = newName;
+        state.currentData.forEach(row => { row[newName] = row[oldName]; delete row[oldName]; });
+    }
+
+    // --- FONCTIONS ELEVES ---
+    function updateStudentName(idx, newName) {
+        state.currentData[idx]["Élèves"] = newName;
+        sortStudentsAlphabetically();
+        renderTable();
+    }
+
+    function addNewStudent() {
+        const name = prompt("Nom de l'élève :", "Nouvel Élève");
+        if (!name) return;
+
+        let newStudent = { "_full": {}, "Élèves": name };
+        state.headers.forEach(h => { if(h !== "Élèves") newStudent[h] = ""; });
+        
+        if(state.currentData.length > 0) {
+            Object.keys(state.currentData[0]._full).forEach(key => newStudent._full[key] = "");
+        }
+        
+        state.currentData.push(newStudent);
+        sortStudentsAlphabetically();
+        renderTable();
+    }
+
+    // --- GESTION DES SLOTS ---
+    function updateSlotLabels() {
+        const container = document.getElementById('slotsContainer');
+        container.innerHTML = '';
+        let order = JSON.parse(localStorage.getItem('slots_order') || '[1,2,3,4,5,6,7,8]');
+        order.forEach((slotId) => {
+            const savedRaw = localStorage.getItem(`slot_${slotId}`);
+            const saved = savedRaw ? JSON.parse(savedRaw) : null;
+            const div = document.createElement('div');
+            div.className = 'slot-container'; div.draggable = true; div.dataset.id = slotId;
+            
+            const color = saved?.slotColor || '#34495e';
+            
+            // Nouveau Sélecteur de couleur (Liste déroulante)
+            const colorSelect = document.createElement('select');
+            colorSelect.className = 'color-selector no-print';
+            colorSelect.style.backgroundColor = color;
+            SLOT_COLORS.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.val;
+                opt.style.backgroundColor = c.val;
+                if(c.val === color) opt.selected = true;
+                colorSelect.appendChild(opt);
+            });
+            colorSelect.onchange = (e) => updateSlotColor(slotId, e.target.value);
+            
+            const btn = document.createElement('div');
+            btn.className = 'slot' + (saved ? ' filled' : '');
+            btn.style.backgroundColor = saved ? color : '';
+            btn.innerText = saved ? saved.title : `Slot ${slotId} (vide)`;
+            btn.onclick = (e) => e.altKey ? saveSlot(slotId) : loadSlot(slotId);
+            
+            div.appendChild(colorSelect); div.appendChild(btn);
+            
+            if(saved) {
+                const del = document.createElement('button');
+                del.className = 'btn-clear-slot'; del.innerHTML = '🗑';
+                del.onclick = (e) => { e.stopPropagation(); localStorage.removeItem(`slot_${slotId}`); updateSlotLabels(); };
+                div.appendChild(del);
+            }
+            div.ondragstart = () => div.classList.add('dragging');
+            div.ondragend = () => {
+                div.classList.remove('dragging');
+                const newOrder = [...container.querySelectorAll('.slot-container')].map(el => parseInt(el.dataset.id));
+                localStorage.setItem('slots_order', JSON.stringify(newOrder));
+            };
+            container.appendChild(div);
+        });
+    }
+
+    function updateSlotColor(id, color) {
+        const saved = localStorage.getItem(`slot_${id}`);
+        if(saved) {
+            let data = JSON.parse(saved);
+            data.slotColor = color;
+            localStorage.setItem(`slot_${id}`, JSON.stringify(data));
+        } else {
+            // Si le slot est vide, on stocke juste la couleur préférée pour ce slot
+            localStorage.setItem(`slot_${id}`, JSON.stringify({ title: `Slot ${id} (vide)`, slotColor: color, headers: ["Élèves"], currentData: [] }));
+        }
+        updateSlotLabels();
+    }
+
+    function saveSlot(i) {
+        state.title = document.getElementById('classeTitle').innerText;
+        const old = localStorage.getItem(`slot_${i}`);
+        if(old) state.slotColor = JSON.parse(old).slotColor;
+        localStorage.setItem(`slot_${i}`, JSON.stringify(state));
+        updateSlotLabels(); alert("Sauvegardé dans le slot " + i);
+    }
+
+    function loadSlot(i) {
+        const saved = localStorage.getItem(`slot_${i}`);
+        if(saved) { 
+            state = JSON.parse(saved); 
+            document.getElementById('classeTitle').innerText = state.title; 
+            updateCsvMenu(); renderTable(); 
+        }
+    }
+
+    // --- MODALE ET FICHES ---
+    function showStudent(idx) {
+        currentStudentIdx = idx;
+        const s = state.currentData[idx];
+        if(!s._full) s._full = {};
+        document.getElementById('studentDetailView').innerHTML = `
+            <div class="fiche-print">
+                <div class="photo-space">PHOTO</div>
+                <h2 contenteditable="true" onblur="updateStudentName(${idx}, this.innerText); showStudent(state.currentData.findIndex(st => st.Élèves === this.innerText))">${s.Élèves}</h2>
+                <p>Classe : ${state.title}</p><hr>
+                <div id="fields-container"></div>
+            </div>`;
+        renderFicheFields(currentStudentIdx);
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function renderFicheFields(studentIdx) {
+        const container = document.getElementById('fields-container');
+        container.innerHTML = "";
+        const s = state.currentData[studentIdx];
+        Object.keys(s._full).forEach(key => {
+            const row = document.createElement('div');
+            row.className = "fiche-row"; row.draggable = true; row.dataset.key = key;
+            row.innerHTML = `<span class="editable-label" contenteditable="true" onblur="updateFicheKey('${key}', this.innerText)">${key}</span><span class="editable-val" contenteditable="true" onblur="updateFicheValue('${key}', this.innerText)">${s._full[key]}</span><button class="no-print btn-del-row" onclick="deleteFicheField('${key}')">×</button>`;
+            row.addEventListener('dragstart', () => row.classList.add('dragging'));
+            row.addEventListener('dragend', () => { row.classList.remove('dragging'); saveNewFieldsOrder(); });
+            container.appendChild(row);
+        });
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            const draggable = document.querySelector('.dragging');
+            const afterElement = getDragAfterElement(container, e.clientY);
+            if (afterElement == null) container.appendChild(draggable);
+            else container.insertBefore(draggable, afterElement);
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.fiche-row:not(.dragging), .slot-container:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+            else return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function saveNewFieldsOrder() {
+        const newOrder = [...document.querySelectorAll('#fields-container .fiche-row')].map(row => row.dataset.key);
+        state.currentData.forEach(s => {
+            const newFull = {};
+            newOrder.forEach(key => { newFull[key] = s._full[key] || ""; });
+            s._full = newFull;
+        });
+    }
+
+    function updateFicheValue(key, val) { state.currentData[currentStudentIdx]._full[key] = val; }
+    function updateFicheKey(oldKey, newKey) {
+        if(oldKey === newKey) return;
+        state.currentData.forEach(s => { s._full[newKey] = s._full[oldKey]; delete s._full[oldKey]; });
+    }
+
+    function deleteFicheField(key) {
+        if(confirm("Supprimer ce champ globalement ?")) {
+            state.currentData.forEach(s => delete s._full[key]);
+            showStudent(currentStudentIdx);
+        }
+    }
+
+    function addNewFieldToFiches() {
+        const fieldName = prompt("Nom du nouveau champ :");
+        if(fieldName) {
+            state.currentData.forEach(s => { if(!s._full) s._full = {}; s._full[fieldName] = ""; });
+            if(currentStudentIdx !== null) showStudent(currentStudentIdx);
+        }
+    }
+
+    function updateCsvMenu() {
+        const dropdown = document.getElementById('csvDropdown');
+        if (!state.csvHeaderNames || state.csvHeaderNames.length === 0) {
+            document.getElementById('csvColArea').style.display = 'none'; return;
+        }
+        dropdown.innerHTML = '<option value="">-- Ajouter --</option>';
+        state.csvHeaderNames.forEach(name => { if(name && name !== "Élèves") dropdown.innerHTML += `<option value="${name}">${name}</option>`; });
+        document.getElementById('csvColArea').style.display = 'block';
+    }
+
+    function addSelectedCsvColumn() {
+        const colName = document.getElementById('csvDropdown').value;
+        if(!colName || state.headers.includes(colName)) return;
+        state.headers.push(colName);
+        state.currentData.forEach(row => { row[colName] = row._full ? row._full[colName] : ""; });
+        renderTable(); document.getElementById('csvDropdown').value = "";
+    }
+
+    function deleteCol(i) { state.headers.splice(i,1); renderTable(); }
+    function deleteRow(i) { if(confirm("Supprimer cet élève ?")) { state.currentData.splice(i,1); renderTable(); } }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
+    function closeModal() { document.getElementById('overlay').style.display = 'none'; document.getElementById('modal').style.display = 'none'; currentStudentIdx = null; }
+
+    function exportToCSV() {
+        let csvContent = "\uFEFF" + state.headers.join(";") + "\n";
+        state.currentData.forEach(row => { csvContent += state.headers.map(h => `"${row[h] || ''}"`).join(";") + "\n"; });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Cahier de bord memo.csv`;
+        link.click();
+    }
+	function exportToLatex() {
+		const colTypes = state.headers.map(() => "l").join("|");
+		let tex = `\\documentclass[a4paper,12pt,landscape]{article}
+	\\usepackage[utf8]{inputenc}
+	\\usepackage[T1]{fontenc}
+	\\usepackage[french]{babel}
+	\\usepackage{geometry}
+	\\geometry{margin=1.5cm}
+
+	\\begin{document}
+	\\section*{Classe : ${state.title.replace(/&/g, "\\&")}}
+
+	\\noindent
+	\\begin{tabular}{|${colTypes}|}
+	\\hline
+	${state.headers.join(" & ")} \\\\ \\hline
+	`;
+		
+		state.currentData.forEach(row => {
+			const line = state.headers.map(h => {
+				let cell = row[h] || "";
+				return cell.toString()
+					.replace(/&/g, "\\&").replace(/%/g, "\\%").replace(/_/g, "\\_").replace(/#/g, "\\#");
+			}).join(" & ");
+			tex += line + " \\\\ \\hline\n";
+		});
+		
+		tex += `\\end{tabular}
+	\\end{document}`;
+
+		downloadFile(tex, `Tableau_${state.title}.tex`);
+	}
+	function exportAllFichesToLatex() {
+		let tex = `\\documentclass[a4paper,11pt]{article}
+	\\usepackage[utf8]{inputenc}
+	\\usepackage[T1]{fontenc}
+	\\usepackage[french]{babel}
+	\\usepackage{geometry}
+	\\usepackage{tcolorbox}
+	\\usepackage{graphicx}
+	\\geometry{margin=1.5cm}
+
+	% Configuration des fiches
+	\\newtcolorbox{ficheeleve}[1]{
+		colback=white,
+		colframe=gray!75!black,
+		fonttitle=\\bfseries\\large,
+		title={#1},
+		sharp corners,
+		boxrule=1pt,
+		enhanced,
+		attach boxed title to top left={yshift=-2mm, xshift=2mm},
+		boxed title style={colback=gray!75!black}
+	}
+
+	\\begin{document}
+	`;
+
+		state.currentData.forEach((s, index) => {
+			const nomEleve = s.Élèves.replace(/&/g, "\\&").replace(/_/g, "\\_");
+			const titreClasse = state.title.replace(/&/g, "\\&");
+			
+			tex += `
+	\\begin{tcolorbox}[colback=white, colframe=black, sharp corners, title={\\Large ${nomEleve}}]
+		\\begin{minipage}[t]{0.70\\textwidth}
+			\\textbf{Classe :} ${titreClasse} \\\\
+			\\rule{\\linewidth}{0.4pt} \\medskip
+	`;
+
+			if (s._full) {
+				Object.keys(s._full).forEach(key => {
+					let val = s._full[key] || "\\dots";
+					const cleanKey = key.replace(/&/g, "\\&").replace(/_/g, "\\_");
+					const cleanVal = val.toString().replace(/&/g, "\\&").replace(/_/g, "\\_").replace(/%/g, "\\%");
+					tex += `        \\textbf{${cleanKey} :} ${cleanVal} \\\\ [3pt]\n`;
+				});
+			}
+
+			tex += `
+		\\end{minipage}
+		\\hfill
+		\\begin{minipage}[t]{3.5cm}
+			\\centering
+			\\vspace{0pt}
+			\\framebox[3.5cm]{\\rule{0pt}{4.5cm} \\textbf{PHOTO}}
+		\\end{minipage}
+	\\end{tcolorbox}
+	\\vspace{0.8cm}
+	`;
+
+			// Gestion du saut de page pour éviter de couper une fiche
+			if ((index + 1) % 2 === 0) tex += "\\newpage\n";
+		});
+
+		tex += "\\end{document}";
+		downloadFile(tex, `Fiches_Design_${state.title}.tex`);
+	}
+
+	// Fonction utilitaire pour le téléchargement
+	function downloadFile(content, fileName) {
+		const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+		const link = document.createElement("a");
+		link.href = URL.createObjectURL(blob);
+		link.download = fileName.replace(/\s+/g, '_');
+		link.click();
+	}
+    function exportFullDatabaseJSON() {
+        const db = { activeState: state, slots: {}, slotsOrder: JSON.parse(localStorage.getItem('slots_order') || '[1,2,3,4,5,6,7,8]') };
+        for(let i=1; i<=8; i++) {
+            const s = localStorage.getItem(`slot_${i}`);
+            if(s) db.slots[i] = JSON.parse(s);
+        }
+        const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Cahier de bord memo.json`;
+        a.click();
+    }
+
+    function importFullDatabaseJSON(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const db = JSON.parse(e.target.result);
+            if (db.slots) Object.keys(db.slots).forEach(k => localStorage.setItem(`slot_${k}`, JSON.stringify(db.slots[k])));
+            if (db.slotsOrder) localStorage.setItem('slots_order', JSON.stringify(db.slotsOrder));
+            if (db.activeState) state = db.activeState;
+            updateSlotLabels(); renderTable();
+        };
+        reader.readAsText(file);
+    }
+
+    updateSlotLabels(); renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,750 @@
+{
+  "progs": {
+    "Progression seconde ": {
+      "chapters": [
+        {
+          "id": "1",
+          "title": "Nombres entiers nombres réels",
+          "page": "p.18",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "1.1",
+              "title": "Nombres entiers",
+              "page": "p.22"
+            },
+            {
+              "id": "1.2",
+              "title": "Nombres réels",
+              "page": "p.24"
+            },
+            {
+              "id": "1.3",
+              "title": "Intervalles - valeur absolue d'un nombre réel",
+              "page": "p.26"
+            },
+            {
+              "id": "1.4",
+              "title": "Puissances",
+              "page": "p.28"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "2",
+          "title": "Équations et inéquations",
+          "page": "p.50",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "2.1",
+              "title": "Égalités et équations",
+              "page": "p.54"
+            },
+            {
+              "id": "2.2",
+              "title": "Inégalités et inéquations",
+              "page": "p.56"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "3",
+          "title": "Vecteurs",
+          "page": "p.194",
+          "duration": 3.5,
+          "subChapters": [
+            {
+              "id": "3.1",
+              "title": "Notion de vecteur",
+              "page": "p.198"
+            },
+            {
+              "id": "3.2",
+              "title": "Opérations sur les vecteurs",
+              "page": "p.200"
+            },
+            {
+              "id": "3.3",
+              "title": "Coordonnées d'un vecteur",
+              "page": "p.202"
+            },
+            {
+              "id": "3.4",
+              "title": "Coordonnées et opérations",
+              "page": "p.204"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "4",
+          "title": "Information chiffrée et statistique descriptive",
+          "page": "p.282",
+          "duration": 3.5,
+          "subChapters": [
+            {
+              "id": "4.1",
+              "title": "Proportion et pourcentage",
+              "page": "p.286"
+            },
+            {
+              "id": "4.2",
+              "title": "Variations d'une quantité",
+              "page": "p.288"
+            },
+            {
+              "id": "4.3",
+              "title": "Évolutions d'une quantité",
+              "page": "p.290"
+            },
+            {
+              "id": "4.4",
+              "title": "Indicateurs de séries statistiques",
+              "page": "p.292"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "5",
+          "title": "Fonctions affines",
+          "page": "p.76",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "5.1",
+              "title": "Fonctions affines",
+              "page": "p.80"
+            },
+            {
+              "id": "5.2",
+              "title": "Variations et signe d'une fonction affine",
+              "page": "p.82"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "6",
+          "title": "Problèmes de géométrie",
+          "page": "p.224",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "6.1",
+              "title": "Colinéarité",
+              "page": "p.228"
+            },
+            {
+              "id": "6.2",
+              "title": "Parallélisme et alignement",
+              "page": "p.230"
+            },
+            {
+              "id": "6.3",
+              "title": "Orthogonalité",
+              "page": "p.232"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "7",
+          "title": "Fonctions carré et cube",
+          "page": "p.104",
+          "duration": 2.5,
+          "subChapters": [
+            {
+              "id": "7.1",
+              "title": "Fonction carré",
+              "page": "p.18"
+            },
+            {
+              "id": "7.2",
+              "title": "Fonction cube",
+              "page": "p.110"
+            },
+            {
+              "id": "7.3",
+              "title": "Équations et inéquations",
+              "page": "p.112"
+            },
+            {
+              "id": "7.4",
+              "title": "Inéquations produit",
+              "page": "p.114"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "8",
+          "title": "Fonctions racine carrée et inverse",
+          "page": "p.136",
+          "duration": 1.5,
+          "subChapters": [
+            {
+              "id": "8.1",
+              "title": "Fonction racine carrée",
+              "page": "p.140"
+            },
+            {
+              "id": "8.2",
+              "title": "Fonction inverse",
+              "page": "p.142"
+            },
+            {
+              "id": "8.3",
+              "title": "Équations et inéquations avec la fonction racine carrée",
+              "page": "p.144"
+            },
+            {
+              "id": "8.4",
+              "title": "Équations et inéquations avec la fonction inverse",
+              "page": "p.146"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "9",
+          "title": "Probabilités",
+          "page": "p.312",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "9.1",
+              "title": "Expérience aléatoire",
+              "page": "p.316"
+            },
+            {
+              "id": "9.2",
+              "title": "Calculs de probabilités",
+              "page": "p.318"
+            },
+            {
+              "id": "9.3",
+              "title": "Dénombrement",
+              "page": "p.320"
+            }
+          ]
+        },
+        {
+          "id": "10",
+          "title": "Variations et extremums des fonctions",
+          "page": "p.168",
+          "duration": 2.5,
+          "subChapters": [
+            {
+              "id": "10.1",
+              "title": "Parité d'une fonction",
+              "page": "p.172"
+            },
+            {
+              "id": "10.2",
+              "title": "Variation d'une fonction et extremums",
+              "page": "p.174"
+            }
+          ]
+        },
+        {
+          "id": "11",
+          "title": "Équations de droites",
+          "page": "p.254",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "11.1",
+              "title": "Équation cartésienne de droite",
+              "page": "p.258"
+            },
+            {
+              "id": "11.2",
+              "title": "Équation réduite de droite",
+              "page": "p.260"
+            },
+            {
+              "id": "11.3",
+              "title": "Systèmes d'équations",
+              "page": "p.262"
+            }
+          ]
+        },
+        {
+          "id": "12",
+          "title": "Échantillonnage",
+          "page": "p.342",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "12.1",
+              "title": "Échantillonnage",
+              "page": "p.346"
+            },
+            {
+              "id": "12.2",
+              "title": "Principe de l'estimation",
+              "page": "p.348"
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "label": "RALLYE MATHÉMATIQUES 16 MARS À 13H30",
+          "emoji": "📝",
+          "s": "2026-03-16",
+          "e": "2026-03-17"
+        }
+      ]
+    },
+    "Progression première st2s": {
+      "chapters": [
+        {
+          "id": "1",
+          "title": "Suites numériques",
+          "page": "p.10",
+          "duration": 4.5,
+          "subChapters": [
+            {
+              "id": "1.1",
+              "title": "Modes de génération d'une suite numérique",
+              "page": "p.12"
+            },
+            {
+              "id": "1.2",
+              "title": "Sens de variation et représentation graphique",
+              "page": "p.14"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "2",
+          "title": "Statistique",
+          "page": "p.188",
+          "duration": 4.5,
+          "subChapters": [
+            {
+              "id": "2.1",
+              "title": "Tableau croisé d'effectifs de deux variables catégorielles",
+              "page": "p.188"
+            },
+            {
+              "id": "2.2",
+              "title": "Fréquence conditionnelle fréquence marginale",
+              "page": "p.190"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "3",
+          "title": "Fonctions de la variable réelle",
+          "page": "p.72",
+          "duration": 4,
+          "subChapters": [
+            {
+              "id": "3.1",
+              "title": "Fonctions de référence",
+              "page": "p.72"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "4",
+          "title": "Probabilités conditionnelles",
+          "page": "p.218",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "4.1",
+              "title": "Modélisation et calcul de probabilités",
+              "page": "p.218"
+            },
+            {
+              "id": "4.2",
+              "title": "Probabilités conditionnelle",
+              "page": "p.220"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "5",
+          "title": "Suites particulières",
+          "page": "p.16",
+          "duration": 4,
+          "subChapters": [
+            {
+              "id": "5.1",
+              "title": "Suites arithmétiques",
+              "page": "p.16"
+            },
+            {
+              "id": "5.2",
+              "title": "Suites géométriques",
+              "page": "p.20"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "6",
+          "title": "Fonctions polynômes",
+          "page": "p.80",
+          "duration": 4,
+          "subChapters": [
+            {
+              "id": "6.1",
+              "title": "Fonctions polynômes de degré 2",
+              "page": "p.80"
+            },
+            {
+              "id": "6.2",
+              "title": "Fonctions polynômes de degré 3",
+              "page": "p.86"
+            }
+          ]
+        },
+        {
+          "id": "7",
+          "title": "Épreuves de Bernoulli variables aléatoires",
+          "page": "p.244",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "7.1",
+              "title": "Modèle associé à une expérience aléatoire",
+              "page": "p.244"
+            },
+            {
+              "id": "7.2",
+              "title": "Variables aléatoires",
+              "page": "p.248"
+            }
+          ]
+        },
+        {
+          "id": "8",
+          "title": "Dérivation",
+          "page": "p.144",
+          "duration": 4,
+          "subChapters": [
+            {
+              "id": "8.1",
+              "title": "Approche graphique du nombre dérivé",
+              "page": "p.144"
+            },
+            {
+              "id": "8.2",
+              "title": "Fonction dérivée",
+              "page": "p.150"
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "label": "BAC BLANC DE MATH - LUNDI 20 AVRIL",
+          "emoji": "📝",
+          "s": "2026-04-20",
+          "e": "2026-04-21"
+        }
+      ]
+    },
+    "Progression première spé": {
+      "chapters": [
+        {
+          "id": "1",
+          "title": "Générer une suite numérique",
+          "page": "p.10",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "1.1",
+              "title": "Modes de génération d'une suite",
+              "page": "p.10"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "2",
+          "title": "Fonctions polynômes du second degré",
+          "page": "p.48",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "2.1",
+              "title": "Fonctions polynômes du second degré",
+              "page": "p.48"
+            },
+            {
+              "id": "2.2",
+              "title": "Factorisation d'un trinôme et résolution d'équation",
+              "page": "p.50"
+            },
+            {
+              "id": "2.3",
+              "title": "Équation cartésienne d'une parabole",
+              "page": "p.246"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "3",
+          "title": "Trigonométrie",
+          "page": "p.82",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "3.1",
+              "title": "Lecture sur le cercle trigonométrique",
+              "page": "p.82"
+            },
+            {
+              "id": "3.2",
+              "title": "Enroulement de la droite des réels",
+              "page": "p.84"
+            },
+            {
+              "id": "3.3",
+              "title": "Sinus et cosinus d'un nombre réel",
+              "page": "p.86"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "4",
+          "title": "Probabilités conditionnelles et indépendance",
+          "page": "p.276",
+          "duration": 2.5,
+          "subChapters": [
+            {
+              "id": "4.1",
+              "title": "Probabilités conditionnelles",
+              "page": "p.276"
+            },
+            {
+              "id": "4.2",
+              "title": "Arbres pondérés",
+              "page": "p.278"
+            },
+            {
+              "id": "4.3",
+              "title": "Indépendance",
+              "page": "p.280"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "5",
+          "title": "Équations Inéquations du second degré",
+          "page": "p.52",
+          "duration": 3,
+          "subChapters": [
+            {
+              "id": "5.1",
+              "title": "Signe d'un trinôme du second degré",
+              "page": "p.52"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "6",
+          "title": "Dérivation locale",
+          "page": "p.114",
+          "duration": 1,
+          "subChapters": [
+            {
+              "id": "6.1",
+              "title": "Taux de variation",
+              "page": "p.114"
+            },
+            {
+              "id": "6.2",
+              "title": "Nombre dérivé d'une fonction en un point",
+              "page": "p.116"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "7",
+          "title": "Suites arithmétiques et géométriques",
+          "page": "p.12",
+          "duration": 1.5,
+          "subChapters": [
+            {
+              "id": "7.1",
+              "title": "Suites arithmétiques",
+              "page": "p.12"
+            },
+            {
+              "id": "7.2",
+              "title": "Suites géométriques",
+              "page": "p.14"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "8",
+          "title": "Dérivation globale",
+          "page": "p.146",
+          "duration": 1.5,
+          "subChapters": [
+            {
+              "id": "8.1",
+              "title": "Fonctions dérivables sur un intervalle",
+              "page": "p.146"
+            },
+            {
+              "id": "8.2",
+              "title": "Variations et courbes représentatives des fonctions",
+              "page": "p.148"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "9",
+          "title": "Variables aléatoires réelles",
+          "page": "p.310",
+          "duration": 1.5,
+          "subChapters": [
+            {
+              "id": "9.1",
+              "title": "Variable aléatoire réelle sur un ensemble fini",
+              "page": "p.310"
+            },
+            {
+              "id": "9.2",
+              "title": "Paramètre d'une variable aléatoire",
+              "page": "p.312"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "10",
+          "title": "Fonction exponentielle",
+          "page": "p.178",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "10.1",
+              "title": "Définition et propriétés algébriques",
+              "page": "p.178"
+            },
+            {
+              "id": "10.2",
+              "title": "Étude de la fonction exponentielle",
+              "page": "p.180"
+            }
+          ],
+          "done": true
+        },
+        {
+          "id": "11",
+          "title": "Produit scalaire",
+          "page": "p.210",
+          "duration": 2.5,
+          "subChapters": [
+            {
+              "id": "11.1",
+              "title": "Produit scalaire",
+              "page": "p.210"
+            },
+            {
+              "id": "11.2",
+              "title": "Propriétés du produit scalaire",
+              "page": "p.212"
+            },
+            {
+              "id": "11.3",
+              "title": "Applications du produit scalaire",
+              "page": "p.214"
+            }
+          ]
+        },
+        {
+          "id": "12",
+          "title": "Études de suites",
+          "page": "p.16",
+          "duration": 1.5,
+          "subChapters": [
+            {
+              "id": "12.1",
+              "title": "Sens de variation d'une suite",
+              "page": "p.16"
+            },
+            {
+              "id": "12.2",
+              "title": "Notion intuitive de limite d'une suite",
+              "page": "p.18"
+            }
+          ]
+        },
+        {
+          "id": "13",
+          "title": "Fonctions trigonométriques",
+          "page": "p.88",
+          "duration": 1.5,
+          "subChapters": [
+            {
+              "id": "13.1",
+              "title": "Fonctions sinus et cosinus",
+              "page": "p.88"
+            }
+          ]
+        },
+        {
+          "id": "14",
+          "title": "Géométrie repérée",
+          "page": "p.244",
+          "duration": 2,
+          "subChapters": [
+            {
+              "id": "14.1",
+              "title": "Vecteur normal à une droite",
+              "page": "p.244"
+            },
+            {
+              "id": "14.2",
+              "title": "Équation cartésienne d'un cercle",
+              "page": "p.246"
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "label": "BAC BLANC DE MATH - LUNDI 20 AVRIL",
+          "emoji": "📝",
+          "s": "2026-04-20",
+          "e": "2026-04-21"
+        }
+      ]
+    }
+  },
+  "config": {
+    "v_t_s": "2025-10-18",
+    "v_t_e": "2025-11-03",
+    "v_n_s": "2025-12-20",
+    "v_n_e": "2026-01-05",
+    "v_h_s": "2026-02-07",
+    "v_h_e": "2026-02-23",
+    "v_p_s": "2026-04-04",
+    "v_p_e": "2026-04-20"
+  }
+}

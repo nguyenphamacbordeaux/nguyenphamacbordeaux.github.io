@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - Nguyen PHAM</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f7f6;
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            color: #333;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            padding: 25px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Onglets */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #2c3e50;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Grille */
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .container.active { display: grid; }
+
+        .tool-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            background: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Style de l'émoticone */
+        .tool-emoji {
+            font-size: 3.5rem; /* Taille de l'émoticone */
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .tool-name {
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .shortcut-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            color: #666;
+            border: 1px solid #ddd;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Mes Outils Pédagogiques</h1>
+        <p>Lycée V&aacuteclav Havel | Mathématiques & SNT</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="showTab('cours')">📑 Salle de cours</button>
+        <button class="tab-btn" onclick="showTab('bureau')">🖥 Bureau</button>
+        <button class="tab-btn" onclick="showTab('labo')">🧪 Labo</button>
+    </nav>
+
+    <div id="cours" class="container active">
+        <a href="Plans de classes.html" class="tool-card" data-key="1" target="_blank">
+            <span class="shortcut-badge">1</span>
+            <span class="tool-emoji">🪑</span>
+            <span class="tool-name">Plans de Classes</span>
+        </a>
+        <a href="Projecteur PDF.html" class="tool-card" data-key="2" target="_blank">
+            <span class="shortcut-badge">2</span>
+            <span class="tool-emoji">📽️</span>
+            <span class="tool-name">Projecteur PDF</span>
+        </a>
+        <a href="Affichage consignes.html" class="tool-card" data-key="3" target="_blank">
+            <span class="shortcut-badge">3</span>
+            <span class="tool-emoji">⏱️</span>
+            <span class="tool-name">Affichage Consignes</span>
+        </a>
+        <a href="https://0333273d.index-education.net/pronote/" class="tool-card" data-key="p" target="_blank">
+            <span class="shortcut-badge">p</span>
+            <span class="tool-emoji">📗</span>
+            <span class="tool-name">Appels et cahier de texte</span>
+        </a>
+		<a href="https://www.geogebra.org/calculator" class="tool-card" data-key="g" target="_blank">
+            <span class="shortcut-badge">g</span>
+            <span class="tool-emoji">💹</span>
+            <span class="tool-name">Géogébra: géométrie dynamique </span>
+        </a>
+		<a href="https://console.basthon.fr/" class="tool-card" data-key="b" target="_blank">
+            <span class="shortcut-badge">b</span>
+            <span class="tool-emoji">🐍</span>
+            <span class="tool-name">Basthon: coder en python</span>
+        </a>
+		<a href="Numworks.html" class="tool-card" data-key="n" target="_blank">
+            <span class="shortcut-badge">n</span>
+            <span class="tool-emoji">📅</span>
+            <span class="tool-name">Simulateur numworks</span>
+        </a>
+		<a href="https://mon.lyceeconnecte.fr/timeline/timeline" class="tool-card" data-key="e" target="_blank">
+            <span class="shortcut-badge">e</span>
+            <span class="tool-emoji">🧱</span>
+            <span class="tool-name">ENT de l'académie</span>
+        </a>
+    </div>
+
+    <div id="bureau" class="container">
+        <a href="Cahier de bord.html" class="tool-card" data-key="4" target="_blank">
+            <span class="shortcut-badge">4</span>
+            <span class="tool-emoji">📓</span>
+            <span class="tool-name">Cahier de Bord</span>
+        </a>
+        <a href="Planification annuelle.html" class="tool-card" data-key="5" target="_blank">
+            <span class="shortcut-badge">5</span>
+            <span class="tool-emoji">📆</span>
+            <span class="tool-name">Planification Annuelle</span>
+        </a>
+        <a href="Préparations bulletins.html" class="tool-card" data-key="6" target="_blank">
+            <span class="shortcut-badge">6</span>
+            <span class="tool-emoji">📝</span>
+            <span class="tool-name">Préparation appréciations par matière</span>
+        </a>
+		<a href="Synthese bulletins.html" class="tool-card" data-key="6" target="_blank">
+            <span class="shortcut-badge">6</span>
+            <span class="tool-emoji">📑</span>
+            <span class="tool-name">Préparation appréciations générales</span>
+        </a>
+        <a href="Préparation rencontre parents.html" class="tool-card" data-key="7" target="_blank">
+            <span class="shortcut-badge">7</span>
+            <span class="tool-emoji">👥</span>
+            <span class="tool-name">Rencontre Parents</span>
+        </a>
+		<a href="https://imp-333273.lycees.nouvelle-aquitaine.pro/" class="tool-card" data-key="i" target="_blank">
+			<span class="shortcut-badge">i</span>
+			<span class="tool-emoji">🖨️</span>
+			<span class="tool-name">Imprimante Gespage</span>
+		</a>
+		<a href="https://courrier.ac-bordeaux.fr/iwc_static/layout/main.html?lang=fr&3.0.2.4.0_22011301&2-6.01_002320=&u=1" class="tool-card" data-key="w" target="_blank">
+			<span class="shortcut-badge">w</span>
+			<span class="tool-emoji">📧️</span>
+			<span class="tool-name">Webmail académique</span>
+		</a>
+		<a href="https://www.dropbox.com/scl/fo/86hjuyni62brbk5vjb0xs/ABe_T82aekn0oekm0IdDpBU?rlkey=3lkhbsod1o4pmoo5gdc3bcuz0&dl=0" class="tool-card" data-key="d" target="_blank">
+			<span class="shortcut-badge">d</span>
+			<span class="tool-emoji">🗃️</span>
+			<span class="tool-name">Dossiers dropbox</span>
+		</a>
+		<a href="https://docs.google.com/spreadsheets/d/1aGph9F6JNUQ370t87u00HyNcD0jHHecc5fzMAlYRRlk/edit?gid=656710345#gid=656710345" class="tool-card" data-key="é" target="_blank">
+			<span class="shortcut-badge">é</span>
+			<span class="tool-emoji">🗄️</span>
+			<span class="tool-name">équipe de math drive</span>
+		</a>
+    </div>
+
+    <div id="labo" class="container">
+        <a href="https://labomep.sesamath.net/formateur/" class="tool-card" data-key="l" target="_blank">
+            <span class="shortcut-badge">l</span>
+            <span class="tool-emoji">🧮</span>
+            <span class="tool-name">Gestion des séquences labomep</span>
+        </a>
+        <a href="Notes labomep.html" class="tool-card" data-key="8" target="_blank">
+            <span class="shortcut-badge">8</span>
+            <span class="tool-emoji">📉</span>
+            <span class="tool-name">Notes Labomep</span>
+        </a>
+		<a href="https://coopmaths.fr/alea/" class="tool-card" data-key="m" target="_blank">
+            <span class="shortcut-badge">m</span>
+            <span class="tool-emoji">☑️</span>
+            <span class="tool-name">Préparation des automatismes</span>
+        </a>
+        <a href="Ajout tableau pour mathalea.html" class="tool-card" data-key="9" target="_blank">
+            <span class="shortcut-badge">9</span>
+            <span class="tool-emoji">✔️</span>
+            <span class="tool-name">Tableau Automatisme</span>
+        </a>
+        <a href="GPP.html" class="tool-card" data-key="0" target="_blank">
+            <span class="shortcut-badge">0</span>
+            <span class="tool-emoji">🤖</span>
+            <span class="tool-name">GPP</span>
+        </a>
+        <a href="https://www.overleaf.com/project" class="tool-card" data-key="o" target="_blank">
+            <span class="shortcut-badge">o</span>
+            <span class="tool-emoji">🔡</span>
+            <span class="tool-name">Overleaf</span>
+        </a>
+		<a href="https://prism.openai.com/?pg=0" class="tool-card" data-key="c" target="_blank">
+            <span class="shortcut-badge">c</span>
+            <span class="tool-emoji">🔣</span>
+            <span class="tool-name">Crixet</span>
+        </a>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+			document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+			document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+			document.getElementById(tabId).classList.add('active');
+			const activeBtn = Array.from(document.querySelectorAll('.tab-btn'))
+								   .find(btn => btn.getAttribute('onclick').includes(tabId));
+			if (activeBtn) activeBtn.classList.add('active');
+		}
+
+        window.addEventListener('keydown', (e) => {
+			const key = e.key.toLowerCase();
+            const target = document.querySelector(`.tool-card[data-key="${key}"]`);
+            if (target) {
+				e.preventDefault();
+				target.click();
+            }
+        });
+    </script>
+</body>
+</html>

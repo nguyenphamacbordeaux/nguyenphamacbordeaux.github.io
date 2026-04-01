@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Planificateur Mathématiques - Lycée de Bègles</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; margin: 20px; font-size: 14px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); position: relative; }
+        #main-title { color: #1a365d; text-align: center; border-bottom: 3px solid #e67e22; padding-bottom: 10px; margin-top: 0; }
+        #toggleConfig { position: absolute; top: 20px; right: 20px; background: #2d3748; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 18px; z-index: 100; }
+        .control-section { background: #edf2f7; border: 1px solid #cbd5e0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .hidden { display: none; }
+        .grid-ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .io-zone { background: #2d3748; color: white; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 2px dashed #e67e22; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; }
+        .tabs-container { display: flex; gap: 5px; margin-top: 20px; border-bottom: 2px solid #1a365d; overflow-x: auto; padding-bottom: 2px; }
+        .tab-wrapper { display: flex; align-items: center; background: #e2e8f0; border-radius: 8px 8px 0 0; border: 1px solid #cbd5e0; border-bottom: none; }
+        .tab-wrapper.active { background: #1a365d; color: white; border-color: #1a365d; }
+        .tab-btn { padding: 10px 15px; border: none; background: transparent; cursor: pointer; font-weight: bold; color: inherit; white-space: nowrap; }
+        .tab-del { padding: 0 8px; cursor: pointer; color: #e53e3e; font-weight: bold; border-left: 1px solid #cbd5e0; }
+        .tab-del:hover { background: #fed7d7; border-radius: 0 8px 0 0; }
+        .duration-ctrl { display: flex; align-items: center; gap: 4px; justify-content: center; }
+        .btn-step { background: #edf2f7; border: 1px solid #cbd5e0; border-radius: 4px; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .btn-step:hover { background: #e67e22; color: white; border-color: #e67e22; }
+        .dur-value { font-weight: bold; width: 30px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 0; }
+        th { background: #1a365d; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+        .row-done { background-color: #f7fafc; color: #a0aec0; }
+        .row-done strong, .row-done .page-num { color: #cbd5e0 !important; }
+        .row-done .chapter-link { text-decoration: none; color: #a0aec0; }
+        .vacation-row { background-color: #fffaf0 !important; color: #c05621; font-weight: bold; text-align: center; font-style: italic; border-top: 1px solid #fbd38d; }
+        .abs-row { background-color: #fff5f5 !important; color: #c53030; font-weight: bold; text-align: center; border-top: 1px solid #feb2b2; }
+        .date-col { width: 170px; font-family: 'Courier New', monospace; font-weight: bold; color: #2d3748; }
+        .page-num { color: #e67e22; font-weight: bold; }
+        .split-tag { font-size: 0.85em; color: #718096; font-style: italic; }
+        .chapter-link { cursor: pointer; color: #1a365d; text-decoration: underline dotted; }
+        .btn-del-chapter { color: #e53e3e; cursor: pointer; margin-left: 10px; font-weight: bold; font-size: 1.1em; opacity: 0.7; }
+        .btn-del-chapter:hover { opacity: 1; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; width: 50%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-header { border-bottom: 2px solid #e67e22; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .close-modal { cursor: pointer; font-size: 24px; font-weight: bold; }
+        .btn-save { background: #27ae60 !important; }
+        .action-btn { padding: 8px 12px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .manual-entry { margin-top: 10px; padding-top: 10px; border-top: 1px solid #cbd5e0; }
+        @media print {
+            .control-section, .io-zone, .btn-step, #toggleConfig, .tabs-container, .modal, .tab-del, input[type="checkbox"], .btn-del-chapter { display: none !important; }
+            .container { box-shadow: none; border: none; width: 100%; margin: 0; padding: 0; }
+        #print-class-name {
+			color: #e67e22; /* Orange comme votre thème */
+			font-style: italic;
+		}
+
+		@media print {
+			#main-title {
+				display: block !important;
+				font-size: 20pt;
+				margin-bottom: 20px;
+			}
+		}
+		}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button id="toggleConfig" onclick="toggleConfig()">⚙️</button>
+    <h1 id="main-title">Planification annuelle <span id="print-class-name"></span></h1>
+
+    <div id="configPanel" class="hidden">
+        <div class="io-zone">
+            <div>
+                <strong>📥 Import / Création :</strong><br>
+                <small>CSV :</small> <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSV(event)"><br>
+                <button class="action-btn" style="background: #8e44ad; margin-top: 5px;" onclick="createNewProg()">✨ Nouvelle progression vide</button>
+            <button class="action-btn" style="background: #34495e; margin-top: 5px;" onclick="showAbout()">ℹ️ À propos</button>
+			</div>
+            <div style="text-align: right;">
+                <strong>📤 Export :</strong><br>
+                <button class="action-btn btn-save" onclick="exportJSON()">💾 Sauvegarder tout en JSON</button><br>
+                <small>JSON :</small> <input type="file" id="jsonFileInput" accept=".json" onchange="importJSON(event)">
+            </div>
+        </div>
+        <div class="control-section">
+            <div class="grid-ctrl">
+                <div>
+                    <strong>📅 Vacances Scolaires (Zone A) :</strong><br>
+                    Toussaint: <input type="date" id="v_t_s" value="2025-10-18" onchange="updateConfig()"> - <input type="date" id="v_t_e" value="2025-11-03" onchange="updateConfig()"><br>
+                    Noël: <input type="date" id="v_n_s" value="2025-12-20" onchange="updateConfig()"> - <input type="date" id="v_n_e" value="2025-01-05" onchange="updateConfig()"><br>
+                    Hiver: <input type="date" id="v_h_s" value="2026-02-07" onchange="updateConfig()"> - <input type="date" id="v_h_e" value="2026-02-23" onchange="updateConfig()"><br>
+                    Printemps: <input type="date" id="v_p_s" value="2026-04-04" onchange="updateConfig()"> - <input type="date" id="v_p_e" value="2026-04-20" onchange="updateConfig()">
+                </div>
+                <div>
+                    <strong>📚 Ajouter un Chapitre :</strong><br>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 5px;">
+                        <input type="text" id="ch_id" placeholder="N° (ex: 1)">
+                        <input type="text" id="ch_title" placeholder="Titre du chapitre">
+                        <input type="text" id="ch_page" placeholder="Page">
+                        <input type="number" id="ch_dur" placeholder="Semaines" step="0.5" value="2">
+                        <button class="action-btn" style="background: #e67e22; grid-column: span 2;" onclick="addChapterManually()">➕ Ajouter et Trier</button>
+                    </div>
+                </div>
+            </div>
+            <div class="manual-entry">
+                <strong>⚠️ Événements de CETTE classe :</strong><br>
+                <div id="eventsList" style="margin-bottom: 10px; max-height: 80px; overflow-y: auto; border: 1px solid #cbd5e0; padding: 5px; background: white; border-radius: 4px;"></div>
+                <div style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="event_label" placeholder="Motif" style="flex:1; padding: 4px;">
+                    <select id="event_emoji" style="padding: 4px;">
+                        <option value="❌">❌ Absence</option>
+                        <option value="💼">💼 Stage</option>
+                        <option value="📝">📝 Examen / DS</option>
+                        <option value="🏛️">🏛️ Sortie</option>
+                        <option value="📅">📅 Réunion / CA</option>
+                        <option value="⚠️">⚠️ Autre</option>
+                    </select>
+                    <input type="date" id="event_s">
+                    <input type="date" id="event_e">
+                    <button class="action-btn" style="background: #27ae60;" onclick="addEvent()">➕</button>
+                    <button class="action-btn" style="background: #3498db;" onclick="window.print()">🖨️ Imprimer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="progTabs" class="tabs-container"></div>
+
+    <table id="progTable">
+        <thead>
+            <tr>
+                <th style="width: 30px;"></th>
+                <th>Périodes</th>
+                <th>Chapitre</th>
+                <th style="text-align:center">Sem.</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<div id="subChapterModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Détails</h2>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    let allData = { progs: {}, config: {} };
+    let activeProgKey = null;
+
+    // --- Fonctions de Persistance (LocalStorage) ---
+    function saveToLocalStorage() {
+        allData.config = {
+            v_t_s: document.getElementById('v_t_s').value, v_t_e: document.getElementById('v_t_e').value,
+            v_n_s: document.getElementById('v_n_s').value, v_n_e: document.getElementById('v_n_e').value,
+            v_h_s: document.getElementById('v_h_s').value, v_h_e: document.getElementById('v_h_e').value,
+            v_p_s: document.getElementById('v_p_s').value, v_p_e: document.getElementById('v_p_e').value
+        };
+        localStorage.setItem('planificateur_maths_data', JSON.stringify(allData));
+        localStorage.setItem('planificateur_maths_activeKey', activeProgKey);
+    }
+
+    function showAbout() {
+    document.getElementById('modalTitle').innerText = `À propos`;
+    let html = `
+        <div style="text-align: center; line-height: 1.6;">
+            <h3 style="color: #1a365d;">Planificateur Mathématiques</h3>
+            <p><strong>Version :</strong> 1.2(Janvier 2026)</p>\vspace{.8cm}
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+            <p style="font-size: 0.9em; color: #666;">
+                Outil conçu pour la gestion des progressions annuelles.
+            </p>
+            <p style="font-size: 0.8em; color: #95a5a6;">
+                <i>"Je ne perds jamais, soit je gagne, soit j'apprends." Nelson Mandela</i>
+            </p>
+        </div>
+    `;
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('subChapterModal').style.display = "block";
+}
+	function loadFromLocalStorage() {
+        const savedData = localStorage.getItem('planificateur_maths_data');
+        const savedKey = localStorage.getItem('planificateur_maths_activeKey');
+        if (savedData) {
+            allData = JSON.parse(savedData);
+            if (allData.config) {
+                for (let key in allData.config) {
+                    if (document.getElementById(key)) document.getElementById(key).value = allData.config[key];
+                }
+            }
+            activeProgKey = savedKey || Object.keys(allData.progs)[0] || null;
+            updateTabs();
+            renderEventsList();
+            renderTable();
+        }
+    }
+
+    // Appelé quand on change une date de vacances
+    function updateConfig() {
+        saveToLocalStorage();
+        renderTable();
+    }
+
+    function toggleConfig() { document.getElementById('configPanel').classList.toggle('hidden'); }
+
+    function createNewProg() {
+        const name = prompt("Nom de la nouvelle progression (ex: 1ere Spé) :");
+        if (name && name.trim() !== "") {
+            if (allData.progs[name]) {
+                alert("Ce nom existe déjà.");
+                return;
+            }
+            allData.progs[name] = { chapters: [], events: [] };
+            activeProgKey = name;
+            updateTabs();
+            renderTable();
+            renderEventsList();
+            saveToLocalStorage();
+        }
+    }
+
+    function addChapterManually() {
+        if (!activeProgKey) {
+            alert("Veuillez d'abord créer ou sélectionner une progression.");
+            return;
+        }
+        const id = document.getElementById('ch_id').value;
+        const title = document.getElementById('ch_title').value;
+        const page = document.getElementById('ch_page').value;
+        const duration = parseFloat(document.getElementById('ch_dur').value);
+
+        if (!id || !title) {
+            alert("L'ID et le Titre sont obligatoires.");
+            return;
+        }
+
+        const newChapter = {
+            id: id,
+            title: title,
+            page: page ? "p." + page : "",
+            duration: isNaN(duration) ? 1 : duration,
+            subChapters: [],
+            done: false
+        };
+
+        allData.progs[activeProgKey].chapters.push(newChapter);
+        allData.progs[activeProgKey].chapters.sort((a, b) => 
+            a.id.toString().localeCompare(b.id.toString(), undefined, {numeric: true, sensitivity: 'base'})
+        );
+        
+        document.getElementById('ch_id').value = "";
+        document.getElementById('ch_title').value = "";
+        document.getElementById('ch_page').value = "";
+        
+        renderTable();
+        saveToLocalStorage();
+    }
+
+    function removeChapter(idx) {
+        if(confirm("Supprimer ce chapitre ?")) {
+            allData.progs[activeProgKey].chapters.splice(idx, 1);
+            renderTable();
+            saveToLocalStorage();
+        }
+    }
+
+    function handleCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const progName = file.name.replace(/\.[^/.]+$/, "");
+        const reader = new FileReader();
+        reader.onload = function(e) { 
+            const data = parseCSVToData(e.target.result);
+            if(data.length > 0) {
+                allData.progs[progName] = { chapters: data, events: [] };
+                activeProgKey = progName;
+                updateTabs();
+                renderTable();
+                renderEventsList();
+                saveToLocalStorage();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const temp = JSON.parse(e.target.result);
+                let migratedProgs = {};
+                for (let key in temp.progs) {
+                    let prog = temp.progs[key];
+                    if (Array.isArray(prog)) {
+                        migratedProgs[key] = { chapters: prog, events: temp.events || [] };
+                    } else {
+                        migratedProgs[key] = prog;
+                    }
+                }
+                allData.progs = migratedProgs;
+                if(temp.config) {
+                    allData.config = temp.config;
+                    for(let key in allData.config) if(document.getElementById(key)) document.getElementById(key).value = allData.config[key];
+                }
+                activeProgKey = Object.keys(allData.progs)[0] || null;
+                updateTabs(); 
+                renderEventsList();
+                renderTable();
+                saveToLocalStorage();
+            } catch (err) { alert("Erreur JSON."); }
+        };
+        reader.readAsText(file);
+    }
+
+    function exportJSON() {
+    saveToLocalStorage(); // On s'assure que tout est à jour avant l'export
+    
+    // On récupère le titre de l'application (le texte du h1)
+    const appTitle = document.getElementById('main-title').innerText;
+    
+    // On nettoie le titre pour éviter les caractères interdits dans les noms de fichiers
+    const safeName = appTitle.replace(/[^a-z0-9àâçéèêëîïôûùœ ]/gi, '_').trim();
+    
+    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    
+    // Le fichier s'appellera "Planification_Mathématiques.json" (ou le titre que vous avez mis)
+    a.download = `Planification annuelle memo.json`;
+    a.click();
+}
+
+    function parseCSVToData(text) {
+        const lines = text.split(/\r?\n/);
+        const sep = lines[0].includes(';') ? ';' : ',';
+        const header = lines[0].split(sep).map(h => h.trim().toLowerCase());
+        const idxNum = header.findIndex(h => h.includes('num'));
+        const idxTitre = header.findIndex(h => h.includes('titre'));
+        const idxPage = header.findIndex(h => h.includes('page'));
+        const idxSem = header.findIndex(h => h.includes('sem'));
+
+        let tempChapters = [];
+        let currentMainChapter = null;
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cols = lines[i].split(sep);
+            const id = cols[idxNum]?.trim() || "";
+            const title = cols[idxTitre]?.trim() || "";
+            const page = cols[idxPage]?.trim() || "";
+            let duration = (idxSem !== -1 && cols[idxSem]) ? parseFloat(cols[idxSem].replace(',', '.')) : 3;
+
+            if (id && !id.includes('.')) {
+                currentMainChapter = { id: id, title: title, page: page ? "p." + page : "", duration: isNaN(duration) ? 3 : duration, subChapters: [], done: false };
+                tempChapters.push(currentMainChapter);
+            } else if (id && id.includes('.') && currentMainChapter) {
+                currentMainChapter.subChapters.push({ id: id, title: title, page: page ? "p." + page : "" });
+            }
+        }
+        return tempChapters;
+    }
+
+    function addEvent() {
+        if (!activeProgKey) return;
+        const label = document.getElementById('event_label').value || "ÉVÉNEMENT";
+        const emoji = document.getElementById('event_emoji').value;
+        const start = document.getElementById('event_s').value;
+        const end = document.getElementById('event_e').value;
+        if (start && end) {
+            if(!allData.progs[activeProgKey].events) allData.progs[activeProgKey].events = [];
+            allData.progs[activeProgKey].events.push({ label: label.toUpperCase(), emoji: emoji, s: start, e: end });
+            renderEventsList(); renderTable(); saveToLocalStorage();
+        }
+    }
+
+    function removeEvent(idx) {
+        allData.progs[activeProgKey].events.splice(idx, 1);
+        renderEventsList(); renderTable(); saveToLocalStorage();
+    }
+
+    function renderEventsList() {
+        const container = document.getElementById('eventsList');
+        if (!activeProgKey || !allData.progs[activeProgKey].events) { container.innerHTML = ""; return; }
+        container.innerHTML = allData.progs[activeProgKey].events.map((ev, i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; border-bottom:1px solid #eee; padding:3px;">
+                <span><strong>${ev.emoji || '❌'} ${ev.label}</strong> (${fmt(new Date(ev.s))})</span>
+                <span style="color:#e53e3e; cursor:pointer; font-weight:bold; padding:0 5px;" onclick="removeEvent(${i})">&times;</span>
+            </div>
+        `).join('');
+    }
+
+    function toggleDone(idx) {
+        allData.progs[activeProgKey].chapters[idx].done = !allData.progs[activeProgKey].chapters[idx].done;
+        renderTable();
+        saveToLocalStorage();
+    }
+
+    function updateTabs() {
+        const container = document.getElementById('progTabs');
+        container.innerHTML = '';
+        Object.keys(allData.progs).forEach(key => {
+            const wrapper = document.createElement('div');
+            wrapper.className = (key === activeProgKey) ? 'tab-wrapper active' : 'tab-wrapper';
+            const btn = document.createElement('button');
+            btn.innerText = key;
+            btn.className = 'tab-btn';
+            btn.onclick = () => { activeProgKey = key; updateTabs(); renderEventsList(); renderTable(); saveToLocalStorage(); };
+            const del = document.createElement('span');
+            del.innerHTML = '&times;';
+            del.className = 'tab-del';
+            del.onclick = (e) => {
+                e.stopPropagation();
+                if(confirm("Supprimer cette classe ?")) {
+                    delete allData.progs[key];
+                    activeProgKey = Object.keys(allData.progs)[0] || null;
+                    updateTabs(); renderEventsList(); renderTable(); saveToLocalStorage();
+                }
+            };
+            wrapper.appendChild(btn);
+            wrapper.appendChild(del);
+            container.appendChild(wrapper);
+        });
+    }
+
+    function renderTable() {
+		document.getElementById('print-class-name').innerText = activeProgKey ? " - " + activeProgKey : "";
+        const tbody = document.querySelector("#progTable tbody");
+        tbody.innerHTML = '';
+        if (!activeProgKey || !allData.progs[activeProgKey]) return;
+
+        const prog = allData.progs[activeProgKey];
+        const progEvents = prog.events || [];
+        let currentDate = new Date("2025-09-01"); 
+
+        const hols = [
+            { n: "TOUSSAINT", emoji: "🍂", s: new Date(document.getElementById('v_t_s').value), e: new Date(document.getElementById('v_t_e').value) },
+            { n: "NOËL", emoji: "🎄", s: new Date(document.getElementById('v_n_s').value), e: new Date(document.getElementById('v_n_e').value) },
+            { n: "HIVER", emoji: "⛷️", s: new Date(document.getElementById('v_h_s').value), e: new Date(document.getElementById('v_h_e').value) },
+            { n: "PRINTEMPS", emoji: "🌱", s: new Date(document.getElementById('v_p_s').value), e: new Date(document.getElementById('v_p_e').value) }
+        ];
+
+        prog.chapters.forEach((ch, idx) => {
+            let durationLeft = ch.duration;
+            let startOfPart = new Date(currentDate);
+            let hasBeenSplit = false;
+
+            while(durationLeft > 0) {
+                let h = hols.find(h => currentDate >= h.s && currentDate < h.e);
+                let ev = progEvents.find(e => currentDate >= new Date(e.s) && currentDate < new Date(e.e));
+
+                if (h || ev) {
+                    let endBreak = h ? h.e : new Date(ev.e);
+                    let label = h ? h.emoji+' '+h.n+' '+h.emoji : (ev.emoji || '❌') + ' ' + ev.label + ' ' + (ev.emoji || '❌');
+                    tbody.insertRow().innerHTML = `<td colspan="4" class="${h ? 'vacation-row' : 'abs-row'}">${label}</td>`;
+                    currentDate = new Date(endBreak);
+                    startOfPart = new Date(currentDate);
+                    continue; 
+                }
+
+                let nextWeek = new Date(currentDate);
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                let hNext = hols.find(h => nextWeek > h.s && nextWeek <= h.e);
+                let evNext = progEvents.find(e => nextWeek > new Date(e.s) && nextWeek <= new Date(e.e));
+
+                const row = tbody.insertRow();
+                if(ch.done) row.className = "row-done";
+
+                let commonContent = `
+                    <td>${!hasBeenSplit ? `<input type="checkbox" ${ch.done ? 'checked' : ''} onclick="toggleDone(${idx})">` : ''}</td>
+                    <td class="date-col">Du ${fmt(startOfPart)} au ${fmt(nextWeek)}</td>
+                    <td><span class="chapter-link" onclick="showSubChapters(${idx})"><strong>Ch.${ch.id}</strong> ${ch.title}</span> 
+                        <span class="page-num">${ch.page}</span>
+                        ${!hasBeenSplit ? `<span class="btn-del-chapter" onclick="removeChapter(${idx})" title="Supprimer ce chapitre">🗑️</span>` : ''}
+                    `;
+
+                if (hNext || evNext) {
+                    row.innerHTML = commonContent + ` <span class="split-tag">(début)</span></td>
+                        <td><div class="duration-ctrl"><button class="btn-step" onclick="updateDur(${idx}, -0.5)">-</button><span class="dur-value">${ch.duration}</span><button class="btn-step" onclick="updateDur(${idx}, 0.5)">+</button></div></td>`;
+                    let b = hNext ? hNext : {label: evNext.label, emoji: evNext.emoji, e: new Date(evNext.e)};
+                    let label = hNext ? b.emoji+' '+b.n+' '+b.emoji : (b.emoji || '❌') + ' ' + b.label + ' ' + (b.emoji || '❌');
+                    tbody.insertRow().innerHTML = `<td colspan="4" class="${hNext ? 'vacation-row' : 'abs-row'}">${label}</td>`;
+                    currentDate = new Date(b.e);
+                    startOfPart = new Date(currentDate);
+                    durationLeft--;
+                    hasBeenSplit = true;
+                } else {
+                    currentDate = nextWeek;
+                    durationLeft--;
+                    if (durationLeft <= 0) {
+                        row.innerHTML = commonContent + ` ${hasBeenSplit ? '<span class="split-tag">(fin)</span>' : ''}</td>
+                            <td style="text-align:center">${hasBeenSplit ? '—' : `<div class="duration-ctrl"><button class="btn-step" onclick="updateDur(${idx}, -0.5)">-</button><span class="dur-value">${ch.duration}</span><button class="btn-step" onclick="updateDur(${idx}, 0.5)">+</button></div>`}</td>`;
+                    }
+                }
+            }
+        });
+    }
+
+    function showSubChapters(idx) {
+			const chapter = allData.progs[activeProgKey].chapters[idx];
+			document.getElementById('modalTitle').innerText = `Chapitre ${chapter.id} : ${chapter.title}`;
+			
+			let html = `<div style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; border: 1px solid #e2e8f0;">
+				<strong>Ajouter un sous-chapitre :</strong><br>
+				<div style="display: flex; gap: 5px; margin-top: 5px;">
+					<span style="align-self: center; font-weight: bold;">${chapter.id}.</span>
+					<input type="number" id="new_sub_id" placeholder="N°" style="width: 50px;">
+					<input type="text" id="new_sub_title" placeholder="Titre" style="flex: 2;">
+					<input type="text" id="new_sub_page" placeholder="Page" style="width: 60px;">
+					<button class="action-btn" style="background: #27ae60;" onclick="addSubChapter(${idx})">➕</button>
+				</div>
+			</div>`;
+
+			html += `<ul style="list-style: none; padding: 0;">`;
+			if(chapter.subChapters && chapter.subChapters.length > 0) {
+				chapter.subChapters.forEach((sub, sIdx) => {
+					html += `
+					<li style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">
+						<span><strong>${sub.id}</strong> ${sub.title} <small class="page-num">(${sub.page})</small></span>
+						<span class="btn-del-chapter" onclick="removeSubChapter(${idx}, ${sIdx})" style="font-size: 0.9em;">🗑️</span>
+					</li>`;
+				});
+			} else {
+				html += "<li style='font-style: italic; color: #718096;'>Aucun sous-chapitre défini</li>";
+			}
+			html += "</ul>";
+			
+			document.getElementById('modalBody').innerHTML = html;
+			document.getElementById('subChapterModal').style.display = "block";
+		}
+		function addSubChapter(chIdx) {
+		const subIdInput = document.getElementById('new_sub_id');
+		const titleInput = document.getElementById('new_sub_title');
+		const pageInput = document.getElementById('new_sub_page');
+		
+		const newSubNum = parseInt(subIdInput.value);
+		const chapter = allData.progs[activeProgKey].chapters[chIdx];
+
+		if (!newSubNum || !titleInput.value) {
+			alert("Veuillez saisir au moins un numéro et un titre.");
+			return;
+		}
+
+		// Décaler les numéros des sous-chapitres existants (ex: si on insère en 2, l'ancien 2 devient 3)
+		chapter.subChapters.forEach(sub => {
+			let currentNum = parseInt(sub.id.split('.')[1]);
+			if (currentNum >= newSubNum) {
+				sub.id = `${chapter.id}.${currentNum + 1}`;
+			}
+		});
+
+		// Ajouter le nouveau sous-chapitre
+		chapter.subChapters.push({
+			id: `${chapter.id}.${newSubNum}`,
+			title: titleInput.value,
+			page: pageInput.value ? "p." + pageInput.value : ""
+		});
+
+		// Trier la liste
+		chapter.subChapters.sort((a, b) => 
+			a.id.localeCompare(b.id, undefined, {numeric: true})
+		);
+
+		saveToLocalStorage();
+		showSubChapters(chIdx); // Rafraîchir la modale
+	}
+
+	function removeSubChapter(chIdx, subIdx) {
+		if (!confirm("Supprimer ce sous-chapitre ?")) return;
+
+		const chapter = allData.progs[activeProgKey].chapters[chIdx];
+		const removedSubNum = parseInt(chapter.subChapters[subIdx].id.split('.')[1]);
+
+		// Supprimer l'élément
+		chapter.subChapters.splice(subIdx, 1);
+
+		// Décaler les numéros suivants vers le bas
+		chapter.subChapters.forEach(sub => {
+			let currentNum = parseInt(sub.id.split('.')[1]);
+			if (currentNum > removedSubNum) {
+				sub.id = `${chapter.id}.${currentNum - 1}`;
+			}
+		});
+
+		saveToLocalStorage();
+		showSubChapters(chIdx); // Rafraîchir la modale
+	}
+    function closeModal() { document.getElementById('subChapterModal').style.display = "none"; }
+    window.onclick = function(event) { if (event.target == document.getElementById('subChapterModal')) closeModal(); }
+    function fmt(d) { return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}); }
+    function updateDur(idx, delta) { allData.progs[activeProgKey].chapters[idx].duration = Math.max(0.5, allData.progs[activeProgKey].chapters[idx].duration + delta); renderTable(); saveToLocalStorage(); }
+
+    // --- Chargement initial au lancement de la page ---
+    window.onload = loadFromLocalStorage;
+</script>
+</body>
+</html>

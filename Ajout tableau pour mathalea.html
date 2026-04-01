@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Générateur LaTeX - Lycée de Bègles</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; background-color: #f4f7f6; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 3px solid #34495e; padding-bottom: 10px; margin-bottom: 20px; }
+        .config { margin-bottom: 25px; padding: 15px; background: #ebf2f7; border-radius: 8px; border-left: 5px solid #34495e; display: flex; gap: 20px; flex-wrap: wrap; }
+        .field { flex: 1; min-width: 200px; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box; }
+        .file-zone { border: 2px dashed #34495e; padding: 30px; text-align: center; margin: 20px 0; border-radius: 8px; cursor: pointer; background: #fff; }
+        button { background: #27ae60; color: white; border: none; padding: 15px 25px; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.2s; }
+        button:hover { background: #1e8449; }
+        #success { display: none; background: #2c3e50; color: white; padding: 15px; border-radius: 5px; text-align: center; margin-top: 20px; font-weight: bold; }
+        textarea { width: 100%; height: 250px; margin-top: 20px; font-family: 'Consolas', monospace; font-size: 11px; padding: 10px; border: 1px solid #ddd; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Préparateur QCM : Tableau centré & Page vierge</h1>
+    
+    <div class="config">
+        <div class="field">
+            <label><strong>Titre du document :</strong></label>
+            <input type="text" id="qcmTitle" placeholder="Nom du fichier par défaut...">
+        </div>
+        <div class="field">
+            <label><strong>Nb de questions :</strong></label>
+            <input type="number" id="nbQuestions" value="10" min="1" max="25">
+        </div>
+    </div>
+
+    <div class="file-zone" onclick="document.getElementById('fileInput').click()">
+        <span id="labelFile">📁 Charger l'archive .zip ou fichier .tex</span>
+        <input type="file" id="fileInput" accept=".zip,.tex" style="display:none">
+    </div>
+
+    <button onclick="processAndCopy()">Générer le code LaTeX</button>
+
+    <div id="success">✅ Code LaTeX copié ! (Prêt pour compilation)</div>
+    <textarea id="resultArea" readonly></textarea>
+</div>
+
+<script>
+let detectedFileName = "";
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    if(e.target.files[0]) {
+        const fullFileName = e.target.files[0].name;
+        document.getElementById('labelFile').innerText = "Fichier : " + fullFileName;
+        detectedFileName = fullFileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+        document.getElementById('qcmTitle').placeholder = "Par défaut : " + detectedFileName;
+    }
+});
+
+async function processAndCopy() {
+    const fileInput = document.getElementById('fileInput');
+    const userTitle = document.getElementById('qcmTitle').value;
+    const nbQ = parseInt(document.getElementById('nbQuestions').value) || 10;
+    const qcmTitle = userTitle || detectedFileName || "QCM Automatisme";
+    const resultArea = document.getElementById('resultArea');
+    const successBadge = document.getElementById('success');
+    
+    if (fileInput.files.length === 0) {
+        alert("Veuillez sélectionner un fichier .zip ou .tex");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    let content = "";
+
+    try {
+        if (file.name.endsWith('.zip')) {
+            const jszip = new JSZip();
+            const zipContent = await jszip.loadAsync(file);
+            const texFileName = Object.keys(zipContent.files).find(name => name.endsWith('.tex'));
+            if (!texFileName) return alert("Pas de .tex trouvé dans l'archive.");
+            content = await zipContent.files[texFileName].async("string");
+        } else if (file.name.endsWith('.tex')) {
+            content = await file.text();
+        } else {
+            return alert("Format de fichier non supporté.");
+        }
+
+        // Calcul dynamique de la structure du tableau
+        let colFormat = "|c".repeat(nbQ + 2) + "|";
+        let headerRow = "";
+        let answerRow = "";
+        for(let i=1; i<=nbQ; i++) {
+            let num = i < 10 ? `~0${i}~` : `~${i}~`;
+            headerRow += ` & \\cellcolor{lightgray} ${num}`;
+            answerRow += ` & \\phantom{X}`;
+        }
+
+        const macro = `
+% --- Commande pour le tableau de réponses (Centré, sans entêtes) ---
+\\newcommand{\\TableauReponse}[3]{
+\\thispagestyle{empty} % Supprime entêtes et pieds de page sur cette page
+\\vspace*{-2cm}
+\\begin{center}
+\\medskip
+$\\renewcommand{\\arraystretch}{2}
+\\begin{array}{${colFormat}}
+\\hline
+\\cellcolor{lightgray}\\textbf{#1} & \\multicolumn{2}{l|} {\\cellcolor{lightgray}\\textbf{Version #2}} & \\multicolumn{${nbQ - 1}}{l|}{\\textbf{Nom Prénom:}}  \\\\
+\\hline
+\\cellcolor{lightgray} \\text{Ex.} ${headerRow} & \\cellcolor{lightgray} \\textbf{Note /#3}\\\\
+\\hline
+\\cellcolor{lightgray} \\text{Rép.} ${answerRow} & \\cellcolor{lightgray} \\phantom{X}\\\\
+\\hline
+\\end{array}
+$
+\\end{center}
+\\vspace{0.5cm}
+}
+`;
+
+        if (!content.includes("\\TableauReponse")) {
+            content = content.replace("\\begin{document}", macro + "\n\\begin{document}");
+        }
+
+        let count = 0;
+        let versions = ["1", "2", "3", "4"];
+        // On remplace l'injection pour qu'elle soit plus robuste
+        content = content.replace(/^(?!.*\\newcommand).*(\\version.*)$/gm, (match) => {
+            if (count < 4) {
+                count++;
+                return `${match}\n\\TableauReponse{${qcmTitle}}{${versions[count-1]}}{${nbQ}}`;
+            }
+            return match;
+        });
+
+        resultArea.value = content;
+        resultArea.style.display = "block";
+        await navigator.clipboard.writeText(content);
+        successBadge.style.display = "block";
+        setTimeout(() => { successBadge.style.display = "none"; }, 5000);
+    } catch (err) { alert("Erreur : " + err.message); }
+}
+</script>
+</body>
+</html>

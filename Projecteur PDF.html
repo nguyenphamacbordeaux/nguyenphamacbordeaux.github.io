@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Projecteur PDF - Lycée Václav Havel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+    <style>
+        :root { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --bg-glass: rgba(255, 255, 255, 0.9); --note-bg: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: #ffffff; margin: 0; overflow: hidden; height: 100vh; }
+        #main-view { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+        #top-bar { position: fixed; top: 10px; left: 10px; right: 50px; z-index: 8000; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+        .glass-panel { background: var(--bg-glass); padding: 5px 12px; border-radius: 25px; border: 1px solid var(--primary); display: flex; align-items: center; gap: 10px; pointer-events: auto; opacity: 0.15; transition: opacity 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .glass-panel:hover { opacity: 1; }
+        #side-nav { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 8000; opacity: 0.15; transition: opacity 0.3s; pointer-events: auto; }
+        #side-nav:hover { opacity: 1; }
+        .nav-scroll-btn { width: 40px; height: 60px; background: var(--bg-glass); border: 1px solid var(--primary); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--primary); font-weight: bold; }
+        .file-actions { display: flex; gap: 8px; border-right: 1px solid #ccc; padding-right: 10px; }
+        .btn-icon { cursor: pointer; font-size: 16px; display: flex; align-items: center; transition: transform 0.1s; }
+        .btn-icon:hover { transform: scale(1.2); }
+        #file-input, #import-input { display: none; }
+        .group-selector { display: flex; gap: 4px; border-right: 1px solid #ccc; padding-right: 10px; }
+        .slot-selector { display: flex; gap: 4px; }
+        .btn-nav { min-width: 28px; height: 28px; border-radius: 14px; border: 1px solid #ccc; background: white; font-size: 11px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: all 0.2s; padding: 0 8px; }
+        .btn-nav:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-nav.active-group { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-nav.filled-slot { border-color: var(--success); color: var(--success); background: #eafff2; }
+        .btn-nav.active-slot { outline: 2px solid var(--primary); outline-offset: 1px; }
+        #modal-about { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background-color: white; margin: 5% auto; padding: 25px; border-radius: 15px; width: 50%; max-width: 600px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); line-height: 1.6; position: relative; }
+        .close-modal { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #999; }
+        .modal-content h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        .shortcut-list { background: #f9f9f9; padding: 15px; border-radius: 8px; font-size: 0.9em; }
+        .shortcut-list b { color: var(--primary); }
+        .inverted-mode #viewer-container { background-color: #000 !important; }
+        .inverted-mode #scroll-canvas { filter: invert(1) hue-rotate(180deg); }
+        .inverted-mode #mask-hole { box-shadow: 0 0 0 5000px #000; border-color: #555; }
+        #viewer-container { height: 100vh; width: 100%; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; }
+        #scroll-canvas { position: relative; left: 0; display: flex; flex-direction: column; align-items: center; cursor: move; transform-origin: top center; padding-bottom: 100vh; }
+        
+        /* Styles pour les notes */
+        #notes-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .math-note { 
+            position: absolute; background: background: var(--note-bg); border: 1px solid #d4d4aa; 
+            padding: 8px; cursor: move; pointer-events: auto; min-width: 40px; border-radius: 4px; 
+            color: inherit; font-size: 1.2rem; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            resize: both; overflow: auto;
+        }
+        .math-note:focus { outline: 2px solid var(--primary); background: white; }
+
+        #mask-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 5000; }
+        #mask-hole { position: absolute; top: 2.5vh; left: 2.5vw; width: 95vw; height: 95vh; box-shadow: 0 0 0 5000px #ffffff; border: 1px solid var(--primary); pointer-events: none; box-sizing: border-box; z-index: 5001; }
+        .handle { position: absolute; background: transparent; pointer-events: auto; z-index: 6000; }
+        .handle-t { top: -20px; left: 0; width: 100%; height: 40px; cursor: ns-resize; }
+        .handle-b { bottom: -20px; left: 0; width: 100%; height: 40px; cursor: ns-resize; }
+        .handle-l { left: -20px; top: 0; width: 40px; height: 100%; cursor: ew-resize; }
+        .handle-r { right: -20px; top: 0; width: 40px; height: 100%; cursor: ew-resize; }
+        @keyframes flash-save { 0% { background-color: rgba(46, 204, 113, 0.5); } 100% { background-color: transparent; } }
+        .flash-active { animation: flash-save 0.4s ease-out; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; }
+        #flash-overlay { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; }
+		.inverted-mode {
+			--note-bg: #000000; /* Devient noir quand on inverse */
+		}
+
+		.inverted-mode #viewer-container { background-color: #000 !important; }
+    </style>
+</head>
+
+<body>
+<div id="flash-overlay"></div>
+<div id="main-view">
+    <div id="side-nav">
+        <button class="nav-scroll-btn" onclick="scrollStep(-100)">▲</button>
+        <button class="nav-scroll-btn" onclick="scrollStep(100)">▼</button>
+    </div>
+
+    <div id="top-bar">
+        <div class="glass-panel">
+            <div class="file-actions">
+				<label class="btn-icon" title="Charger PDF">📂<input type="file" id="file-input" accept="application/pdf"></label>
+				<div class="btn-icon" onclick="exportData()" title="Exporter">💾</div>
+				<label class="btn-icon" title="Importer">📥<input type="file" id="import-input" accept=".json"></label>
+				<div class="btn-icon" id="btn-invert" onclick="toggleInvert()" title="Inverser les couleurs (*)">🌓</div>
+				<div class="btn-icon" onclick="toggleAbout()" title="A propos">❓</div>
+			</div>
+			<div id="zoom-control" class="glass-panel">
+				<button class="zoom-btn" onclick="adjustZoom(-0.1)">➖</button>
+				<input type="range" id="zoom-slider" min="0.5" max="2" step="0.1" value="1">
+				<button class="zoom-btn" onclick="adjustZoom(0.1)">➕</button>
+			</div>
+			<div class="group-selector" id="group-container">
+                <button class="btn-nav active-group" id="btn-g1" onclick="changeGroup(1)" oncontextmenu="renameGroup(1, event)">G1</button>
+                <button class="btn-nav" id="btn-g2" onclick="changeGroup(2)" oncontextmenu="renameGroup(2, event)">G2</button>
+                <button class="btn-nav" id="btn-g3" onclick="changeGroup(3)" oncontextmenu="renameGroup(3, event)">G3</button>
+                <button class="btn-nav" id="btn-g4" onclick="changeGroup(4)" oncontextmenu="renameGroup(4, event)">G4</button>
+				<button class="btn-nav" id="btn-g5" onclick="changeGroup(5)" oncontextmenu="renameGroup(5, event)">G5</button>
+				<button class="btn-nav" id="btn-g6" onclick="changeGroup(6)" oncontextmenu="renameGroup(6, event)">G6</button>
+            </div>
+            <div class="slot-selector" id="slot-container">
+                <button class="btn-nav" id="slot-btn-1" onclick="handleQuickAction(1, event)">1AC</button>
+                <button class="btn-nav" id="slot-btn-2" onclick="handleQuickAction(2, event)">2ACC</button>
+                <button class="btn-nav" id="slot-btn-3" onclick="handleQuickAction(3, event)">3CH</button>
+                <button class="btn-nav" id="slot-btn-4" onclick="handleQuickAction(4, event)">4TDR</button>
+                <button class="btn-nav" id="slot-btn-5" onclick="handleQuickAction(5, event)">5TDE</button>
+                <button class="btn-nav" id="slot-btn-6" onclick="handleQuickAction(6, event)">6TDC</button>
+				<button class="btn-nav" id="slot-btn-7" onclick="handleQuickAction(7, event)">7TFE</button>
+				<button class="btn-nav" id="slot-btn-8" onclick="handleQuickAction(8, event)">8TFC</button>
+				<button class="btn-nav" id="slot-btn-9" onclick="handleQuickAction(9, event)">9++</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-about">
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleAbout()">&times;</span>
+            <h1>Projecteur PDF v1.6</h1>
+            <p><strong>Concepteur :</strong> Nguyen PHAM</p>
+            <p><b>Double-clic :</b> Créer une note ($...$ pour LaTeX).</p>
+            <p><b>Alt + Clic sur note :</b> Supprimer la note.</p>
+            
+            <div class="shortcut-list">
+                <b>NAVIGATION & SLOTS :</b><br>
+                • <b>1 à 9</b> : Charger un slot | <b>Alt + Chiffre</b> : Sauvegarder<br>
+                • <b>Tab</b> : Changer de groupe (Classe)<br>
+                • <b>/</b> : Sauvegarde rapide sur le slot actif<br>
+                • <b>+ / -</b> : Zoomer / Dézoomer<br><br>
+
+                <b>GESTION DU MASQUE :</b><br>
+                • <b>0</b> : Alterner Plein écran / Masque personnalisé<br>
+                • <b>Maj + Flèches</b> : Déplacer le coin <b>Haut-Gauche</b><br>
+                • <b>Alt + Flèches</b> : Déplacer le coin <b>Bas-Droit</b><br><br>
+
+                <b>AFFICHAGE :</b><br>
+                • <b>*</b> : Inverser les couleurs (Mode sombre)
+            </div>
+        </div>
+    </div>
+
+    <div id="viewer-container">
+        <div id="scroll-canvas">
+            <div id="notes-layer"></div>
+        </div>
+    </div>
+
+    <div id="mask-container">
+        <div id="mask-hole">
+            <div class="handle handle-t" data-dir="top"></div>
+            <div class="handle handle-b" data-dir="bottom"></div>
+            <div class="handle handle-l" data-dir="left"></div>
+            <div class="handle handle-r" data-dir="right"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    const hole = document.getElementById('mask-hole');
+    const scrollCanvas = document.getElementById('scroll-canvas');
+    const viewerContainer = document.getElementById('viewer-container');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const modalAbout = document.getElementById('modal-about');
+    const notesLayer = document.getElementById('notes-layer');
+    
+    let lastUsedSlotId = null, activeHandle = null, isDraggingDoc = false, startX, currentLeft = 0;
+    let currentPDFData = null, activeGroupId = 1, isWindowReset = false;
+    let savedHole = { top: '2.5vh', left: '2.5vw', width: '80vw', height: '95vh' };
+    let db;
+
+    function initDB() {
+        const request = indexedDB.open("ProjecteurDB", 1);
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("slots")) db.createObjectStore("slots");
+        };
+        request.onsuccess = (e) => { db = e.target.result; loadGroupNames(); updateSlotsUI(); };
+    }
+
+	function triggerFlash() {
+		const overlay = document.getElementById('flash-overlay');
+		overlay.classList.remove('flash-active');
+		void overlay.offsetWidth;
+		overlay.classList.add('flash-active');
+	}
+
+    function toggleAbout() { modalAbout.style.display = (modalAbout.style.display === 'block') ? 'none' : 'block'; }
+
+    window.addEventListener('keydown', (e) => {
+		const step = 10; // Pas de déplacement en pixels
+		const scrollStepAmt = 40; // Pas pour le défilement vertical
+		const rect = hole.getBoundingClientRect();
+
+		// --- NAVIGATION PDF AVEC LES FLÈCHES SEULES ---
+		if (!e.shiftKey && !e.altKey && e.key.startsWith("Arrow")) {
+			e.preventDefault();
+			if (e.key === "ArrowUp") viewerContainer.scrollBy(0, -scrollStepAmt);
+			if (e.key === "ArrowDown") viewerContainer.scrollBy(0, scrollStepAmt);
+			if (e.key === "ArrowLeft") {
+				currentLeft += scrollStepAmt;
+				scrollCanvas.style.left = currentLeft + 'px';
+			}
+			if (e.key === "ArrowRight") {
+				currentLeft -= scrollStepAmt;
+				scrollCanvas.style.left = currentLeft + 'px';
+			}
+			return;
+		}
+		if (e.shiftKey && e.key.startsWith("Arrow")) {
+			e.preventDefault();
+			isWindowReset = false;
+			if (e.key === "ArrowUp") {
+				hole.style.top = (rect.top - step) + "px";
+				hole.style.height = (rect.height + step) + "px";
+			}
+			if (e.key === "ArrowDown") {
+				hole.style.top = (rect.top + step) + "px";
+				hole.style.height = (rect.height - step) + "px";
+			}
+			if (e.key === "ArrowLeft") {
+				hole.style.left = (rect.left - step) + "px";
+				hole.style.width = (rect.width + step) + "px";
+			}
+			if (e.key === "ArrowRight") {
+				hole.style.left = (rect.left + step) + "px";
+				hole.style.width = (rect.width - step) + "px";
+			}
+		}
+
+		if (e.altKey && e.key.startsWith("Arrow")) {
+			e.preventDefault();
+			isWindowReset = false;
+			if (e.key === "ArrowUp") hole.style.height = (rect.height - step) + "px";
+			if (e.key === "ArrowDown") hole.style.height = (rect.height + step) + "px";
+			if (e.key === "ArrowLeft") hole.style.width = (rect.width - step) + "px";
+			if (e.key === "ArrowRight") hole.style.width = (rect.width + step) + "px";
+		}
+		if (e.target.tagName === "INPUT" || e.target.classList.contains('math-note') || e.target.isContentEditable) {
+			return; 
+		}
+
+		if (e.key === "Tab") {
+			e.preventDefault();
+			let nextGroup = activeGroupId + 1;
+			if (nextGroup > 6) nextGroup = 1;
+			changeGroup(nextGroup);
+			return;
+		}
+
+		if (e.key >= "1" && e.key <= "9") {
+			const slotNum = parseInt(e.key);
+			const btn = document.getElementById(`slot-btn-${slotNum}`);
+			const id = `${activeGroupId}-${slotNum}`;
+
+			if (e.shiftKey) {
+				e.preventDefault();
+				const tx = db.transaction("slots", "readwrite");
+				tx.objectStore("slots").delete(id);
+				tx.oncomplete = () => updateSlotsUI();
+			} 
+			else if (e.altKey) {
+				e.preventDefault();
+				if (!currentPDFData) return;
+
+				const data = { 
+					pdfData: currentPDFData, 
+					zoom: zoomSlider.value, 
+					scrollX: currentLeft, 
+					scrollY: viewerContainer.scrollTop, 
+					mask: { t: hole.style.top, l: hole.style.left, w: hole.style.width, h: hole.style.height },
+					notes: notesLayer.innerHTML 
+				};
+
+				const tx = db.transaction("slots", "readwrite");
+				const store = tx.objectStore("slots");
+				const request = store.put(data, id);
+
+				request.onsuccess = () => {
+					lastUsedSlotId = id;
+					triggerFlash();
+					updateSlotsUI();
+					document.querySelectorAll('.slot-selector .btn-nav').forEach(b => b.classList.remove('active-slot'));
+					btn.classList.add('active-slot');
+				};
+			} 
+			else {
+				handleQuickAction(slotNum, { currentTarget: btn });
+			}
+		}
+		
+		if (e.key === "0") toggleHoleView();
+		if (e.key === "*") toggleInvert();
+		if (e.key === "+") { e.preventDefault(); adjustZoom(0.1); }
+		if (e.key === "-") { e.preventDefault(); adjustZoom(-0.1); }
+		if (e.key === "/") { e.preventDefault(); quickSaveLastSlot();
+        return;
+    }
+	});
+
+    async function renderPDF(uint8) {
+        const pdf = await pdfjsLib.getDocument(uint8).promise;
+        const canvases = scrollCanvas.querySelectorAll('canvas');
+        canvases.forEach(c => c.remove());
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2.2 });
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width; canvas.height = viewport.height;
+            scrollCanvas.insertBefore(canvas, notesLayer); 
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport: viewport }).promise;
+        }
+    }
+
+    scrollCanvas.addEventListener('dblclick', (e) => {
+        if (e.target.classList.contains('math-note')) return;
+        const rect = scrollCanvas.getBoundingClientRect();
+        const scale = parseFloat(zoomSlider.value);
+        const x = (e.clientX - rect.left) / scale;
+        const y = (e.clientY - rect.top) / scale;
+        createNote(x, y);
+    });
+
+    function createNote(x, y, content = "") {
+        const note = document.createElement('div');
+        note.className = 'math-note';
+        note.contentEditable = true;
+        note.style.left = x + 'px';
+        note.style.top = y + 'px';
+        note.innerHTML = content;
+
+        note.addEventListener('blur', () => {
+			if (note.innerText.trim() === "") {
+				note.remove(); 
+			}
+            const rawText = note.innerText;
+            note.dataset.raw = rawText; 
+            note.innerHTML = rawText.replace(/\$(.*?)\$/g, (m, formula) => {
+                return katex.renderToString(formula, { throwOnError: false });
+            });
+        });
+
+        note.addEventListener('focus', () => {
+            if (note.dataset.raw) note.innerText = note.dataset.raw;
+        });
+
+        note.addEventListener('mousedown', (e) => {
+            if (e.altKey) { note.remove(); return; }
+            if (document.activeElement === note) return;
+            e.stopPropagation();
+            let sX = e.clientX, sY = e.clientY;
+            let oL = note.offsetLeft, oT = note.offsetTop;
+            const scale = parseFloat(zoomSlider.value);
+
+            function move(ev) {
+                note.style.left = (oL + (ev.clientX - sX) / scale) + 'px';
+                note.style.top = (oT + (ev.clientY - sY) / scale) + 'px';
+            }
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', () => window.removeEventListener('mousemove', move), {once:true});
+        });
+
+        notesLayer.appendChild(note);
+        note.focus();
+    }
+
+    function scrollStep(amt) { viewerContainer.scrollBy({ top: amt, behavior: 'smooth' }); }
+    function loadGroupNames() { for (let i = 1; i <= 6; i++) { const n = localStorage.getItem(`groupName-${i}`); if (n) document.getElementById(`btn-g${i}`).innerText = n; } }
+    function renameGroup(id, e) { e.preventDefault(); const btn = document.getElementById(`btn-g${id}`); const n = prompt(`Nom groupe :`, btn.innerText); if (n) { btn.innerText = n.substring(0, 10); localStorage.setItem(`groupName-${id}`, btn.innerText); } }
+    function updateZoom(v) { scrollCanvas.style.transform = `scale(${v})`; }
+    function adjustZoom(d) { zoomSlider.value = Math.min(Math.max(parseFloat(zoomSlider.value) + d, 0.5), 3).toFixed(1); updateZoom(zoomSlider.value); }
+    function changeGroup(g) { activeGroupId = g; updateSlotsUI(); document.querySelectorAll('.group-selector .btn-nav').forEach((b, i) => b.classList.toggle('active-group', (i+1) === g)); }
+    function applyHole(t, l, w, h) { hole.style.top = t; hole.style.left = l; hole.style.width = w; hole.style.height = h; }
+    function resetHoleToDefault() { applyHole('2.5vh', '2.5vw', '80vw', '95vh'); isWindowReset = true; }
+    function toggleInvert() { document.getElementById('main-view').classList.toggle('inverted-mode'); }
+    
+    function toggleHoleView() {
+        if (!isWindowReset) {
+            savedHole = { top: hole.style.top || '2.5vh', left: hole.style.left || '2.5vw', width: hole.style.width || '95vw', height: hole.style.height || '95vh' };
+            resetHoleToDefault();
+        } else {
+            applyHole(savedHole.top, savedHole.left, savedHole.width, savedHole.height);
+            isWindowReset = false;
+        }
+    }
+
+    async function handleQuickAction(slotNum, e) {
+		const id = `${activeGroupId}-${slotNum}`, btn = e.currentTarget;
+		if (e.shiftKey) { 
+			if (confirm(`Supprimer slot ${slotNum} ?`)) { 
+				const tx = db.transaction("slots", "readwrite"); 
+				tx.objectStore("slots").delete(id); 
+				tx.oncomplete = () => updateSlotsUI(); 
+			}
+		} else if (e.altKey) { 
+			if (!currentPDFData) return;
+			const data = { 
+				pdfData: currentPDFData, zoom: zoomSlider.value, scrollX: currentLeft, scrollY: viewerContainer.scrollTop, 
+				mask: { t: hole.style.top, l: hole.style.left, w: hole.style.width, h: hole.style.height },
+				notes: notesLayer.innerHTML 
+			};
+			const tx = db.transaction("slots", "readwrite"); 
+			tx.objectStore("slots").put(data, id); 
+			tx.oncomplete = () => { triggerFlash(); updateSlotsUI(); };
+		} else { 
+			const tx = db.transaction("slots", "readonly");
+			tx.objectStore("slots").get(id).onsuccess = async (ev) => {
+				const d = ev.target.result; if (!d) return;
+				lastUsedSlotId = id;
+				document.querySelectorAll('.slot-selector .btn-nav').forEach(b => b.classList.remove('active-slot')); 
+				btn.classList.add('active-slot');
+				currentPDFData = d.pdfData; await renderPDF(base64ToUint8Array(d.pdfData));
+				zoomSlider.value = d.zoom; updateZoom(d.zoom);
+				currentLeft = d.scrollX; scrollCanvas.style.left = currentLeft + 'px';
+				viewerContainer.scrollTop = d.scrollY; applyHole(d.mask.t, d.mask.l, d.mask.w, d.mask.h);
+				notesLayer.innerHTML = d.notes || "";
+				isWindowReset = false;
+			};
+		}
+	}
+
+	async function quickSaveLastSlot() {
+		if (!lastUsedSlotId || !currentPDFData) return;
+		const data = { 
+			pdfData: currentPDFData, zoom: zoomSlider.value, scrollX: currentLeft, scrollY: viewerContainer.scrollTop, 
+			mask: { t: hole.style.top, l: hole.style.left, w: hole.style.width, h: hole.style.height },
+            notes: notesLayer.innerHTML
+		};
+		const tx = db.transaction("slots", "readwrite");
+		tx.objectStore("slots").put(data, lastUsedSlotId);
+		const slotNum = lastUsedSlotId.split('-')[1];
+		const btn = document.getElementById(`slot-btn-${slotNum}`);
+		btn.style.background = "var(--success)";
+		setTimeout(() => { btn.style.background = ""; triggerFlash(); updateSlotsUI(); }, 300);
+	}
+	
+    function updateSlotsUI() {
+		const tx = db.transaction("slots", "readonly");
+		const store = tx.objectStore("slots");
+		for(let i=1; i<=9; i++) {
+			const id = `${activeGroupId}-${i}`;
+			const btn = document.getElementById(`slot-btn-${i}`);
+			
+			store.get(id).onsuccess = (e) => { 
+				btn.classList.toggle('filled-slot', !!e.target.result); 
+			};
+		}
+	}
+
+    function exportData() {
+        const tx = db.transaction("slots", "readonly");
+        const store = tx.objectStore("slots");
+        const req = store.openCursor();
+        const allSlots = {};
+        req.onsuccess = (event) => {
+            const cursor = event.target.result;
+            if (cursor) { allSlots[cursor.key] = cursor.value; cursor.continue(); }
+            else {
+                const groupNames = {};
+                for(let i=1; i<=6; i++) groupNames[i] = localStorage.getItem(`groupName-${i}`);
+                const dataStr = JSON.stringify({ slots: allSlots, groupNames: groupNames });
+                const blob = new Blob([dataStr], {type: "application/json"});
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url; link.download = `Projecteur PDF memo.json`;
+                link.click();
+            }
+        };
+    }
+
+    document.getElementById('import-input').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const data = JSON.parse(ev.target.result);
+            if (data.groupNames) Object.keys(data.groupNames).forEach(k => localStorage.setItem(`groupName-${k}`, data.groupNames[k]));
+            const tx = db.transaction("slots", "readwrite");
+            Object.keys(data.slots).forEach(k => tx.objectStore("slots").put(data.slots[k], k));
+            tx.oncomplete = () => location.reload();
+        };
+        reader.readAsText(file);
+    });
+
+    document.getElementById('file-input').addEventListener('change', async (e) => {
+        const f = e.target.files[0]; if (!f) return;
+        const reader = new FileReader();
+        reader.onload = async function() { 
+            currentPDFData = uint8ArrayToBase64(new Uint8Array(this.result)); 
+            await renderPDF(new Uint8Array(this.result)); 
+            zoomSlider.value = 1; updateZoom(1); resetHoleToDefault();
+            notesLayer.innerHTML = "";
+        };
+        reader.readAsArrayBuffer(f);
+    });
+
+    function uint8ArrayToBase64(u) { let b = ''; u.forEach(x => b += String.fromCharCode(x)); return btoa(b); }
+    function base64ToUint8Array(b) { const s = atob(b); const y = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) y[i] = s.charCodeAt(i); return y; }
+
+    zoomSlider.addEventListener('input', (e) => updateZoom(e.target.value));
+    document.querySelectorAll('.handle').forEach(h => h.addEventListener('mousedown', (e) => { activeHandle = h.dataset.dir; isWindowReset = false; e.stopPropagation(); }));
+    
+    scrollCanvas.addEventListener('mousedown', (e) => { 
+        if (activeHandle || e.target.classList.contains('math-note')) return; 
+        isDraggingDoc = true; startX = e.clientX - currentLeft; 
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (activeHandle) {
+            const r = hole.getBoundingClientRect();
+            if (activeHandle === 'top') { hole.style.height = (r.bottom - e.clientY) + 'px'; hole.style.top = e.clientY + 'px'; }
+            if (activeHandle === 'bottom') hole.style.height = (e.clientY - r.top) + 'px';
+            if (activeHandle === 'left') { hole.style.width = (r.right - e.clientX) + 'px'; hole.style.left = e.clientX + 'px'; }
+            if (activeHandle === 'right') hole.style.width = (e.clientX - r.left) + 'px';
+        }
+        if (isDraggingDoc) { currentLeft = e.clientX - startX; scrollCanvas.style.left = currentLeft + 'px'; }
+    });
+    window.addEventListener('mouseup', () => { activeHandle = null; isDraggingDoc = false; });
+	window.addEventListener('resize', () => {
+    if (isWindowReset) {
+        resetHoleToDefault();
+    }
+});
+
+    initDB();
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculateur Labomep - Nguyen PHAM</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2, h3 { color: #2c3e50; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-top: 0; }
+        
+        #config-area { transition: all 0.3s ease; }
+        
+        .consignes { 
+            background-color: #fff3cd; border-left: 5px solid #ffc107; 
+            padding: 15px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.5;
+        }
+        .consignes strong { color: #856404; }
+
+        .config-section { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #dee2e6; }
+        .config-row { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+
+        input[type="file"] { margin: 10px 0; padding: 15px; border: 2px dashed #3498db; width: 100%; box-sizing: border-box; cursor: pointer; }
+        
+        #coeffs-container { margin-top: 20px; padding: 15px; background: #ebf2f7; border-radius: 5px; border: 1px solid #d1d8dd; }
+        .coeff-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #dcdde1; }
+        .coeff-row input { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .btn-main { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn-main:hover { background: #219150; }
+        
+        #btn-modifier { display: none; background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #34495e; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        .moyenne { font-weight: bold; color: #2980b9; font-size: 1.1em; }
+        .percent-tag { font-size: 0.85em; color: #7f8c8d; font-weight: normal; margin-left: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Notes de Labomep avec coefficients</h2>
+
+    <button id="btn-modifier" onclick="afficherConfig()">⚙️ Modifier la configuration / Charger un autre fichier</button>
+
+    <div id="config-area">
+        <div class="consignes">
+            <strong>📌 Méthode :</strong><br>
+			- Cliquer sur 📈 Afficher le bilan<br>
+			- Choisir table<br>
+            - Selectionner Affichage du score en % sans nombre d'essais.<br>
+            - Exporter le fichier.
+        </div>
+        
+        <div class="config-section">
+            <div class="config-row">
+                <label for="baremeGlobal"><strong>Note finale sur :</strong></label>
+                <input type="number" id="baremeGlobal" value="10" min="1" style="width: 60px; padding: 5px;">
+            </div>
+            <input type="file" id="csvFile" accept=".csv">
+        </div>
+        
+        <div id="coeffs-container" style="display: none;">
+            <h3>Réglage des coefficients</h3>
+            <div id="coeffs-list"></div>
+            <button class="btn-main" onclick="genererTableau()">Calculer et afficher les résultats</button>
+        </div>
+    </div>
+
+    <div id="resultat"></div>
+</div>
+
+<script>
+    let globalHeaders = [];
+    let globalData = [];
+    let validExoIndices = [];
+
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            let content = e.target.result;
+            // On retire les guillemets éventuels mais on garde les points-virgules intacts
+            content = content.replace(/"/g, "");
+            preProcess(content);
+        };
+        reader.readAsText(file);
+    });
+
+    function preProcess(csvText) {
+        // Découpage par ligne
+        const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (lines.length < 1) return;
+
+        // Découpage par point-virgule uniquement
+        globalHeaders = lines[0].split(';').map(h => h.trim());
+        globalData = lines.slice(1);
+        validExoIndices = [];
+
+        const listDiv = document.getElementById('coeffs-list');
+        listDiv.innerHTML = '';
+
+        // On commence à l'index 2 (après Classe et Nom)
+        for (let i = 2; i < globalHeaders.length; i++) {
+            let title = globalHeaders[i];
+            if (title.length > 0) {
+                // On ignore les colonnes qui calculent déjà une moyenne dans Labomep
+                let isMoyenneCol = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("moyenne");
+                if (!isMoyenneCol) {
+                    validExoIndices.push(i);
+                    const div = document.createElement('div');
+                    div.className = 'coeff-row';
+                    div.innerHTML = `<span>${title}</span>
+                                     <input type="number" class="coeff-input" data-index="${i}" value="1" min="0" step="0.5">`;
+                    listDiv.appendChild(div);
+                }
+            }
+        }
+        document.getElementById('coeffs-container').style.display = 'block';
+    }
+
+    function afficherConfig() {
+        document.getElementById('config-area').style.display = 'block';
+        document.getElementById('btn-modifier').style.display = 'none';
+        document.getElementById('resultat').innerHTML = '';
+    }
+
+    function genererTableau() {
+        const bareme = parseFloat(document.getElementById('baremeGlobal').value) || 20;
+        const coeffInputs = document.querySelectorAll('.coeff-input');
+        const coeffs = {};
+        coeffInputs.forEach(input => {
+            coeffs[input.dataset.index] = parseFloat(input.value) || 0;
+        });
+
+        document.getElementById('config-area').style.display = 'none';
+        document.getElementById('btn-modifier').style.display = 'block';
+
+        let html = `<h3>Résultats (Barème : /${bareme})</h3>`;
+        html += `<table><thead><tr><th>Classe</th><th>Nom</th><th>Note /${bareme}</th></tr></thead><tbody>`;
+
+        globalData.forEach(line => {
+            // Séparation par point-virgule pour chaque ligne d'élève
+            const columns = line.split(';').map(c => c.trim());
+            if (columns.length < 2) return;
+
+            const classe = columns[0] || "N/A";
+            const nom = columns[1] || "Anonyme";
+            
+            let sommePondereePercent = 0;
+            let totalCoeffs = 0;
+
+            validExoIndices.forEach(idx => {
+                // Nettoyage de la cellule (gestion du % et de la virgule décimale française)
+                let cell = columns[idx] ? columns[idx].replace('%', '').replace(',', '.') : "";
+                let c = coeffs[idx];
+                
+                let scorePercent = 0;
+                if (cell !== "" && !isNaN(cell) && cell !== "Non terminé" && cell !== "Aucun résultat") {
+                    scorePercent = parseFloat(cell);
+                } else {
+                    scorePercent = 0; 
+                }
+
+                sommePondereePercent += scorePercent * c;
+                totalCoeffs += c;
+            });
+
+            let moyennePercent = totalCoeffs > 0 ? (sommePondereePercent / totalCoeffs) : 0;
+            let noteAjustee = ((moyennePercent / 100) * bareme).toFixed(2);
+
+            html += `<tr>
+                        <td>${classe}</td>
+                        <td>${nom}</td>
+                        <td>
+                            <span class="moyenne">${noteAjustee}</span>
+                            <span class="percent-tag">(${moyennePercent.toFixed(1)}%)</span>
+                        </td>
+                    </tr>`;
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('resultat').innerHTML = html;
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Générateur d'Appréciations Scolaires - Expert</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 20px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: #1a5c96; border-bottom: 3px solid #1a5c96; padding-bottom: 10px; }
+        .section { background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; }
+        .file-upload { background: #eef2f7; text-align: center; border: 2px dashed #1a5c96; padding: 20px; cursor: pointer; }
+        
+        .mapping-header { display: grid; grid-template-columns: 50px 2fr 2fr; gap: 10px; font-weight: bold; background: #1a5c96; color: white; padding: 12px; border-radius: 6px 6px 0 0; }
+        .column-row { display: grid; grid-template-columns: 50px 2fr 2fr; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #dfe6e9; padding: 10px; text-align: center; font-size: 0.9em; min-width: 50px; }
+        th { background-color: #f8f9fa; color: #1a5c96; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: #1a5c96; color: white; }
+        .btn-success { background: #27ae60; color: white; width: 100%; font-size: 1.1em; }
+        .btn-danger { background: #e74c3c; color: white; padding: 5px 10px; }
+        .btn-copy { background: #e67e22; color: white; width: 100%; font-size: 1.1em; margin-top: 15px; }
+        
+        input, select, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; font-family: inherit; }
+        textarea#promptText { width: 100%; height: 400px; margin-top: 20px; font-family: monospace; display: none; background: #fdfdfd; padding: 15px; border: 1px solid #bbb; white-space: pre-wrap; }
+        .context-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .category-input { border: 2px solid #3498db !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Générateur d'Appréciations</h2>
+
+    <div class="section" style="border-left: 5px solid #1a5c96;">
+        <div class="context-grid">
+            <div><label>Discipline</label><input type="text" id="subject" value="Mathématiques"></div>
+            <div><label>Établissement</label><input type="text" id="school" value="Lycée de Bègles"></div>
+            <div><label>Classe</label><input type="text" id="className" placeholder="Ex: 4ème C..."></div>
+            <div>
+                <label>Période</label>
+                <div style="display: flex; gap: 5px;">
+                    <select id="pType" onchange="updatePeriodNumbers()" style="flex: 2;">
+                        <option value="Trimestre">Trimestre</option><option value="Semestre">Semestre</option>
+                    </select>
+                    <select id="pNum" style="flex: 1;"></select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section file-upload" onclick="document.getElementById('csvFile').click()">
+        <strong>Charger le fichier des notes au format csv téléchargé sur pronote</strong>
+        <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="processCSV(this)">
+    </div>
+
+    <div id="configSection" class="section" style="display:none;">
+        <h3>2. Attribution des catégories</h3>
+        <div class="mapping-header">
+            <div>Inclure</div><div>Colonne d'origine</div><div>Catégorie (Regroupement)</div>
+        </div>
+        <div id="mappingList"></div>
+        
+        <datalist id="dynamicSuggestions">
+            <option value="Moyenne Générale"><option value="Devoirs Surveillés"><option value="Automatisme"><option value="Leçon"><option value="Labomep"><option value="Participation"><option value="Vocabulaire"><option value="Expression Orale"><option value="Expression orale"><option value="Expression écrite">
+        </datalist>
+
+        <div style="text-align:right; margin-top:20px;">
+            <button class="btn btn-primary" onclick="calculateAndDisplay()">Calculer et Regrouper</button>
+        </div>
+    </div>
+
+    <div id="previewSection" class="section" style="display:none;">
+        <h3>3. Synthèse par catégorie</h3>
+        <div style="background: #fffdf0; padding: 15px; border: 1px solid #ffeeba; border-radius: 8px; margin-bottom: 20px;">
+            <label><strong>Bilan global du groupe :</strong></label>
+            <textarea id="classObservation" rows="3" style="margin-top:8px;" placeholder="Ex: Classe dynamique..."></textarea>
+        </div>
+        <div style="overflow-x: auto;"><table id="previewTable"><thead id="previewHead"></thead><tbody id="previewBody"></tbody></table></div>
+        <div style="margin-top: 25px; text-align: center;">
+            <label><input type="checkbox" id="useLatex" checked> Code LaTeX complet</label><br><br>
+            <button class="btn btn-success" onclick="generatePrompt()">Générer le Prompt pour l'IA</button>
+        </div>
+        <div id="finalStep" style="display:none;">
+            <textarea id="promptText" readonly></textarea>
+            <button class="btn btn-copy" onclick="copyAndOpenGemini()">Copier le prompt & Ouvrir Gemini</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let rawHeaders = [];
+    let rawRows = [];
+    let studentData = [];
+    let groupedCategories = {};
+
+    function updatePeriodNumbers() {
+        const type = document.getElementById('pType').value;
+        const select = document.getElementById('pNum');
+        const max = (type === 'Trimestre') ? 3 : 2;
+        select.innerHTML = '';
+        for(let i=1; i<=max; i++) {
+            let opt = document.createElement('option');
+            opt.value = i; opt.textContent = i;
+            select.appendChild(opt);
+        }
+    }
+    updatePeriodNumbers();
+
+    function addToSuggestions(val) {
+        const dl = document.getElementById('dynamicSuggestions');
+        const options = Array.from(dl.options).map(o => o.value);
+        if (val && val.trim() !== "" && !options.includes(val)) {
+            const newOpt = document.createElement('option');
+            newOpt.value = val; dl.appendChild(newOpt);
+        }
+    }
+
+    function processCSV(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const lines = e.target.result.split('\n').filter(l => l.trim() !== '');
+            rawHeaders = lines[1].replace(/"/g, '').split(';');
+            rawRows = lines.slice(2);
+            displayMapping();
+        };
+        reader.readAsText(file);
+    }
+
+    function displayMapping() {
+        const list = document.getElementById('mappingList');
+        list.innerHTML = "";
+        rawHeaders.forEach((h, i) => {
+            if (i < 1 || h.trim() === "") return;
+            const barème = h.match(/\/(\d+)/) ? h.match(/\/(\d+)/)[1] : "20";
+            const div = document.createElement('div');
+            div.className = 'column-row';
+            div.innerHTML = `
+                <input type="checkbox" id="check_${i}" checked style="width:20px; height:20px;">
+                <div style="font-size:0.85em; color:#666;">${h}</div>
+                <input type="text" id="label_${i}" list="dynamicSuggestions" class="category-input" value="${h.split('/')[0].trim()}" onblur="addToSuggestions(this.value)">
+                <input type="hidden" id="max_${i}" value="${barème}">`;
+            list.appendChild(div);
+        });
+        document.getElementById('configSection').style.display = 'block';
+    }
+
+    function calculateAndDisplay() {
+        groupedCategories = {};
+        rawHeaders.forEach((h, i) => {
+            if (document.getElementById(`check_${i}`)?.checked) {
+                const label = document.getElementById(`label_${i}`).value || "Autre";
+                const max = document.getElementById(`max_${i}`).value;
+                if (!groupedCategories[label]) groupedCategories[label] = { indices: [], max: max };
+                groupedCategories[label].indices.push(i);
+            }
+        });
+
+        studentData = rawRows.map((row) => {
+            const cells = row.replace(/"/g, '').split(';');
+            const fullName = cells[0]?.trim();
+            if (!fullName) return null;
+            
+            let stats = { firstName: fullName.split(' ').pop(), groups: {} };
+            
+            for (let label in groupedCategories) {
+                let notes = [];
+                groupedCategories[label].indices.forEach(idx => {
+                    let val = cells[idx]?.replace(',', '.').trim();
+                    if (val !== "" && !isNaN(parseFloat(val))) notes.push(parseFloat(val));
+                });
+                
+                if (notes.length > 0) {
+                    const avg = (notes.reduce((a,b) => a+b, 0) / notes.length).toFixed(2);
+                    stats.groups[label] = { avg: avg, detail: notes.join(', '), max: groupedCategories[label].max };
+                } else {
+                    stats.groups[label] = null; 
+                }
+            }
+            return stats;
+        }).filter(s => s !== null);
+
+        renderPreview();
+    }
+
+    function renderPreview() {
+        const head = document.getElementById('previewHead');
+        const body = document.getElementById('previewBody');
+        let headHtml = `<tr><th>Suppr.</th><th>Prénom</th>`;
+        for (let label in groupedCategories) { headHtml += `<th>${label} (/${groupedCategories[label].max})</th>`; }
+        headHtml += `<th>Remarques</th></tr>`;
+        head.innerHTML = headHtml;
+
+        body.innerHTML = "";
+        studentData.forEach((s, i) => {
+            const tr = document.createElement('tr');
+            let rowHtml = `<td><button class="btn btn-danger" onclick="deleteStudent(${i})">🗑️</button></td><td><b>${s.firstName}</b></td>`;
+            for (let label in groupedCategories) {
+                const data = s.groups[label];
+                rowHtml += `<td>${data ? (data.avg + '/' + data.max) : ''}</td>`;
+            }
+            rowHtml += `<td><input type="text" id="obs_${i}" placeholder="RAS"></td>`;
+            tr.innerHTML = rowHtml;
+            body.appendChild(tr);
+        });
+        document.getElementById('previewSection').style.display = 'block';
+    }
+
+    function deleteStudent(index) { studentData.splice(index, 1); renderPreview(); }
+
+    function generatePrompt() {
+        const disc = document.getElementById('subject').value;
+        const school = document.getElementById('school').value;
+        const cls = document.getElementById('className').value;
+        const period = `${document.getElementById('pType').value} ${document.getElementById('pNum').value}`;
+        const classObs = document.getElementById('classObservation').value;
+        
+        let p = `Tu es enseignant de ${disc} au ${school}. 
+Rédige les appréciations (2-3 phrases) pour la classe de ${cls} (${period}).
+1. Pour chaque élève, sois qualitatif. N'utilise pas le tutoiement. Ne cite pas les notes. Conserve l'ordre de la liste.
+je souhaite également:
+2. Bilan de classe : "${classObs || 'Analyse globale'}".
+3. un tableau récapitulatif avec une appréciation succinte pour chaque élève et sa moyenne générale.
+\n\nLISTE DES ÉLÈVES :\n`;
+
+        studentData.forEach((s, i) => {
+            const obs = document.getElementById(`obs_${i}`).value || "R.A.S.";
+            let detail = "";
+            for (let label in s.groups) {
+                const g = s.groups[label];
+                if (g) detail += `${label}: ${g.avg}/${g.max} (Détail: ${g.detail}) | `;
+            }
+            p += `Élève : ${s.firstName} | ${detail} Note prof : ${obs}\n`;
+        });
+
+        if (document.getElementById('useLatex').checked) {
+            p += `\nProduis le code LaTeX complet avec titre, bilan de classe avec  tableau de synthèse terminant par une colonne permettant de saisir l'avis du conseil, un tableau donnant la répartition du nombre d'élèves dans les différentes plages de notes pour les différentes catégories de notes et enfin le détails individuels.Dans le tableau LaTeX, laisse les cases vides si l'élève n'a pas de note dans une catégorie.\nJe souhaite le code complet.\nSTRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\title{\\textbf{{{titre}: {{theme}}}}}\n\\author{\\PhamN}\n\\date{}\n\n\\begin{document}...`;
+        }
+        
+        document.getElementById('promptText').value = p;
+        document.getElementById('promptText').style.display = 'block';
+        document.getElementById('finalStep').style.display = 'block';
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function copyAndOpenGemini() {
+        navigator.clipboard.writeText(document.getElementById('promptText').value).then(() => {
+            window.open("https://gemini.google.com/app", "_blank");
+        });
+    }
+</script>
+</body>
+</html>

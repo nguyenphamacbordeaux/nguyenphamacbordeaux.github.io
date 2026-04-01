@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Plan de Classe - Multi-Classes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+    <style>
+        /* --- STYLE --- */
+        :root {
+            --zoom-level: 1; /* Variable pour le contrôle du zoom */
+        }
+        
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        
+        .controls { 
+            background: #ffffff; padding: 15px; border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 15px; 
+            display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; font-size: 0.8em;
+        }
+
+        .config-item { display: flex; flex-direction: column; gap: 4px; }
+
+        .custom-file-upload {
+            display: inline-block; padding: 4px 10px; cursor: pointer;
+            background: #f8f9fa; border: 1px solid #ccc; border-radius: 4px;
+            text-align: center; font-size: 0.9em; transition: background 0.2s;
+        }
+        .custom-file-upload:hover { background: #e2e6ea; }
+        #csvFile { display: none; }
+
+        .classes-container {
+            width: 100%; background: #e3f2fd; padding: 15px; border-radius: 8px;
+            margin-bottom: 15px; max-height: 450px; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px;
+        }
+        
+        .class-group { background: white; padding: 8px; border-radius: 8px; border: 2px solid #ddd; cursor: grab; transition: transform 0.1s; }
+        .class-group:active { cursor: grabbing; }
+        .class-group.active { border: 3px solid #000 !important; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        
+        /* COULEURS DES CLASSES */
+        #class-1 { border-color: #e53935; } #class-1 .class-header { background: #ffebee; }
+        #class-2 { border-color: #d81b60; } #class-2 .class-header { background: #fce4ec; }
+        #class-3 { border-color: #8e24aa; } #class-3 .class-header { background: #f3e5f5; }
+        #class-4 { border-color: #3949ab; } #class-4 .class-header { background: #e8eaf6; }
+        #class-5 { border-color: #1e88e5; } #class-5 .class-header { background: #e3f2fd; }
+        #class-6 { border-color: #00897b; } #class-6 .class-header { background: #e0f2f1; }
+        #class-7 { border-color: #7cb342; } #class-7 .class-header { background: #f1f8e9; }
+        #class-8 { border-color: #fb8c00; } #class-8 .class-header { background: #fff3e0; }
+
+        .class-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 5px; border-radius: 4px; }
+        .class-name-input { font-size: 0.9em; font-weight: bold; border: 1px solid rgba(0,0,0,0.1); padding: 3px 8px; border-radius: 4px; flex: 1; background: rgba(255,255,255,0.7); cursor: text; }
+        
+        .saves-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .save-slot { background: #f5f5f5; padding: 5px; border-radius: 5px; border: 1px solid #ddd; display: flex; flex-direction: column; gap: 3px; cursor: default; }
+        .save-slot.filled { background: #c8e6c9; border-color: #81c784; }
+        .save-slot.active-memory { border: 3px solid #1976d2 !important; background: #bbdefb !important; }
+        
+        .save-name-input { font-size: 0.75em; border: 1px solid #ccc; padding: 2px 4px; border-radius: 3px; width: 100%; }
+        .save-buttons { display: flex; gap: 2px; }
+        .save-buttons button { flex: 1; font-size: 0.7em; padding: 2px 0; border-radius: 2px; color: white; border: none; cursor: pointer; }
+        .btn-load { background: #1976d2; }
+        .btn-reset { background: #757575; }
+
+        #classroom {
+            display: grid; gap: 4px; background: #fff;
+            padding: 45px 10px 45px 10px; border: 2px solid #333;
+            width: 100%; max-width: 100vw; position: relative; margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .board-label {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            background: #333; color: white; padding: 3px 20px;
+            font-weight: bold; border-radius: 3px; font-size: calc(0.75em * var(--zoom-level));
+            z-index: 20;
+        }
+        .board-top { top: 8px; }
+        .board-bottom { bottom: 8px; }
+
+        .student-slot {
+            background: #f8f9fa; border: 1px solid #dee2e6;
+            border-radius: 3px; display: flex; align-items: center; justify-content: center;
+            min-height: calc(45px * var(--zoom-level)); cursor: pointer; position: relative;
+        }
+        .slot-blocked { background: #f1f3f4 !important; border: 1px dashed #ced4da !important; }
+        .slot-blocked::after { content: "✕"; color: #ccc; }
+        
+        .aisle-v { background: #eceff1; border: none; min-width: 15px; max-width: 25px; }
+        .aisle-h { background: #eceff1; border: none; min-height: 15px; max-height: 25px; grid-column: 1 / -1; }
+
+        .student-card {
+            width: 100%; height: 100%; background: #fff; border: 1.5px solid #1976d2;
+            border-radius: 2px; display: flex; align-items: center; justify-content: center;
+            text-align: center; font-size: calc(0.85em * var(--zoom-level)); font-weight: bold; color: #2c3e50;
+            cursor: move; position: relative; padding: 2px; z-index: 5;
+        }
+        
+        .student-card.locked {
+            border: 2px solid #fbc02d !important;
+            background: #fff9c4;
+        }
+        .student-card.locked::before {
+            content: "🔒";
+            position: absolute;
+            bottom: 0px;
+            right: 1px;
+            font-size: 9px;
+        }
+
+        .lucky-student { border: 3px solid #1976d2 !important; transform: scale(1.02); z-index: 100; box-shadow: 0 0 5px rgba(25, 118, 210, 0.3); }
+        
+        .delete-btn, .move-btn {
+            position: absolute; background: #ff5252; color: white;
+            border: none; width: 14px; height: 14px; font-size: 10px; cursor: pointer;
+            border-radius: 50%; display: none; z-index: 10;
+        }
+        .move-btn { left: -1px; top: -1px; background: #1976d2; }
+        .delete-btn { right: -1px; top: -1px; }
+        .student-card:hover .delete-btn, .student-card:hover .move-btn { display: flex; align-items: center; justify-content: center; }
+
+        .moving-pending { animation: pulse-blue 1.5s infinite; box-shadow: 0 0 10px #1976d2; }
+        @keyframes pulse-blue { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .controls-wrapper.hidden { display: none; }
+        .status-msg { position: fixed; top: 10px; left: 10px; background: #4caf50; color: white; padding: 10px 15px; border-radius: 5px; display: none; z-index: 2001; }
+        
+        .random-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 2000; display: none; text-align: center; font-size: 2em; font-weight: bold;
+            max-width: 80%; word-wrap: break-word;
+        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999; display: none; }
+
+        @media print { .top-actions, .controls-wrapper, .status-msg { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="top-actions" style="position: fixed; top: 10px; right: 10px; z-index: 1001; display: flex; gap: 5px;">
+        <button onclick="changeZoom(-0.1)" title="Dézoomer (-)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">➖</button>
+        <button onclick="changeZoom(0.1)" title="Zoomer (+)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">➕</button>
+        <button onclick="shuffleStudents()" title="Placement Aléatoire (A)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">🔀</button>
+        <button onclick="toggleView()" title="Basculer Vue (0)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">↔️</button>
+        <button onclick="showClassMessage()" title="Message à la classe (M)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">💬</button>
+        <button onclick="pickRandomStudent()" title="Tirage au sort (Espace)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">🎲</button>
+        <button onclick="toggleControls()" title="Paramètres (Echap)" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">⚙️</button>
+        <button onclick="toggleInfo()" title="À propos" style="background:white; border:1px solid #ddd; padding:8px; cursor:pointer; border-radius:4px;">ℹ️</button>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+    <div class="random-modal" id="genericModal"></div>
+    
+    <div class="random-modal" id="infoModal" style="font-size: 1rem; text-align: left; padding: 20px;">
+        <h2 style="margin-top: 0; color: #1976d2;">À propos & Raccourcis</h2>
+        <hr>
+        <p><strong>Version :</strong> 1.6 (Fév 2026)</p>
+        <ul style="font-size: 0.9em; padding-left: 20px;">
+            <li><strong>Clic Droit :</strong> Verrouiller/Déverrouiller une place (mélange)</li>
+            <li><strong>Espace :</strong> Tirage au sort</li>
+            <li><strong>0 (Zéro) :</strong> Inverser la vue</li>
+            <li><strong>Echap :</strong> Ouvrir/Fermer les paramètres</li>
+            <li><strong>+ / - :</strong> Gérer le zoom de l'affichage</li>
+            <li><strong>M :</strong> Message à la classe (LaTeX possible)</li>
+            <li><strong>A :</strong> Placement aléatoire</li>
+            <li><strong>Ctrl + Z :</strong> Annuler mouvement</li>
+        </ul>
+        <button onclick="toggleInfo()" style="background: #757575; color: white; width: 100%; margin-top: 10px; padding: 8px; border: none; border-radius: 4px; cursor: pointer;">Fermer</button>
+    </div>
+
+    <div class="status-msg" id="statusMsg"></div>
+
+    <div class="controls-wrapper" id="controlsWrapper">
+        <div class="classes-container" id="classesContainer"></div>
+
+        <div class="controls">
+            <div class="config-item">
+                <label style="font-weight: bold;">Importer CSV</label>
+                <label for="csvFile" class="custom-file-upload">Choisir un fichier</label>
+                <input type="file" id="csvFile" accept=".csv">
+            </div>
+            <div class="config-item">
+                <label>Ajout Manuel</label>
+                <div style="display:flex; gap:3px;">
+                    <input type="text" id="manualName" placeholder="Nom..." style="width: 80px; padding: 4px;" onkeydown="if(event.key==='Enter') addManualStudent()">
+                    <button onclick="addManualStudent()" style="background:#1976d2; color:white; border:none; border-radius:3px; cursor:pointer; padding: 0 8px;">+</button>
+                </div>
+            </div>
+            <div class="config-item">
+                <label>Salle (RxC)</label>
+                <div style="display:flex; gap:3px;">
+                    <input type="number" id="rowsInput" value="5" style="width: 40px;" oninput="generateGrid()"> 
+                    <input type="number" id="colsInput" value="7" style="width: 40px;" oninput="generateGrid()">
+                </div>
+            </div>
+            <div class="config-item">
+                <label>Coul. Vert.</label>
+                <input type="text" id="aislePositions" value="2, 5" style="width: 45px;" oninput="generateGrid()">
+            </div>
+            <div class="config-item">
+                <label>Coul. Horiz.</label>
+                <input type="text" id="aisleHPositions" value="" placeholder="ex: 2" style="width: 45px;" oninput="generateGrid()">
+            </div>
+            <div class="config-item">
+                <label>Remplissage</label>
+                <select id="fillMode" onchange="reorderStudents()">
+                    <option value="vertical" selected>Vert.</option>
+                    <option value="horizontal">Horiz.</option>
+                </select>
+            </div>
+            <div style="margin-left:auto; display:flex; gap:5px;">
+                <button onclick="window.print()" style="background:#2e7d32; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; border:none; cursor:pointer;">Imprimer</button>
+                <button onclick="exportAllData()" style="background:#9c27b0; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; border:none; cursor:pointer;">💾 Export</button>
+                <button onclick="document.getElementById('importFile').click()" style="background:#673ab7; color:white; padding:5px 10px; border-radius:4px; font-weight:bold; border:none; cursor:pointer;">📂 Import</button>
+                <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importAllData(event)">
+            </div>
+            <div class="config-item" style="width: 100%;">
+                <label>Message à la classe (Supporte LaTeX $...$)</label>
+                <textarea id="classMessageInput" placeholder="Ex: Résoudre $x^2 + 2x + 1 = 0$" style="width: 100%; height: 45px; font-size: 0.9em; display: block; border: 1px solid #ccc; border-radius: 4px; padding: 5px; font-family: inherit;"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <h2 id="currentLayoutTitle" style="text-align: center; color: #1976d2; margin-top: 20px; min-height: 1.2em;"></h2>
+    <div id="classroom"></div>
+
+    <script>
+        let allStudents = [];
+        let deletedStudentNames = new Set();
+        let blockedSlots = new Set();
+        let lockedStudents = new Set();
+        let studentPositions = {};
+        let pendingMoveStudent = null;
+        let luckyStudentName = null;
+        let lastStudentPositions = null;
+        let draggedClass = null;
+        let isTeacherView = false; 
+        let currentZoom = 1;
+
+        let currentLoadedClass = null;
+        let currentLoadedSlot = null;
+
+        async function saveToStorage(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+        async function loadFromStorage(key) { const d = localStorage.getItem(key); return d ? JSON.parse(d) : null; }
+
+        function toggleView() {
+            isTeacherView = !isTeacherView;
+            showStatus(isTeacherView ? "Vue : Bureau du Professeur" : "Vue : Fond de Salle");
+            updateLayoutTitle();
+            generateGrid();
+        }
+
+        function changeZoom(delta) {
+            const newZoom = Math.min(Math.max(0.5, currentZoom + delta), 2.5);
+            currentZoom = newZoom;
+            document.documentElement.style.setProperty('--zoom-level', currentZoom);
+            
+            const container = document.getElementById('classroom');
+            if (currentZoom < 1) {
+                container.style.maxWidth = (currentZoom * 100) + "vw";
+            } else {
+                container.style.maxWidth = "100vw";
+            }
+            
+            showStatus(`Zoom : ${Math.round(currentZoom * 100)}%`);
+        }
+
+        async function updateLayoutTitle() {
+            const titleElem = document.getElementById('currentLayoutTitle');
+            if (!currentLoadedClass || !currentLoadedSlot) return;
+            const meta = await loadFromStorage(`class_${currentLoadedClass}_meta`);
+            const className = meta ? meta.name : `Classe ${currentLoadedClass}`;
+            const slotName = await loadFromStorage(`class_${currentLoadedClass}_save_${currentLoadedSlot}_name`) || `Activité ${currentLoadedSlot}`;
+            const viewSuffix = isTeacherView ? " [Vue Bureau]" : " [Vue Salle]";
+            titleElem.textContent = `${className} — ${slotName}${viewSuffix}`;
+        }
+
+        function shuffleStudents() {
+            if (allStudents.length === 0) return;
+            lastStudentPositions = JSON.parse(JSON.stringify(studentPositions));
+            const rows = parseInt(document.getElementById('rowsInput').value) || 1;
+            const cols = parseInt(document.getElementById('colsInput').value) || 1;
+            
+            let occupiedSlots = new Set();
+            for (let student of lockedStudents) {
+                if (studentPositions[student]) occupiedSlots.add(studentPositions[student]);
+            }
+
+            let availableSlots = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const pos = `${r}-${c}`;
+                    if (!blockedSlots.has(pos) && !occupiedSlots.has(pos)) availableSlots.push(pos);
+                }
+            }
+            for (let i = availableSlots.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableSlots[i], availableSlots[j]] = [availableSlots[j], availableSlots[i]];
+            }
+            
+            const mobileStudents = allStudents.filter(s => !deletedStudentNames.has(s) && !lockedStudents.has(s));
+            mobileStudents.forEach((student, index) => {
+                if (index < availableSlots.length) studentPositions[student] = availableSlots[index];
+            });
+            generateGrid();
+            showStatus("Placement aléatoire (places verrouillées conservées)");
+        }
+
+        function generateGrid() {
+            const container = document.getElementById('classroom');
+            const rows = parseInt(document.getElementById('rowsInput').value) || 1;
+            const cols = parseInt(document.getElementById('colsInput').value) || 1;
+            const aislesVInput = document.getElementById('aislePositions').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            const aislesHInput = document.getElementById('aisleHPositions').value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            
+            container.innerHTML = '';
+            const board = document.createElement('div');
+            board.className = 'board-label ' + (isTeacherView ? 'board-bottom' : 'board-top');
+            board.textContent = "TABLEAU / BUREAU ENSEIGNANT";
+            container.appendChild(board);
+
+            let gridColLayout = "";
+            for (let i = 1; i <= cols; i++) {
+                gridColLayout += "minmax(0, 1fr) ";
+                let colToCheck = isTeacherView ? (cols - i) : i; 
+                if (aislesVInput.includes(colToCheck) && i < cols) gridColLayout += "15px ";
+            }
+            container.style.gridTemplateColumns = gridColLayout;
+
+            const activeStudents = allStudents.filter(s => !deletedStudentNames.has(s));
+            let matrix = Array(rows).fill().map(() => Array(cols).fill(null));
+
+            for (const [student, pos] of Object.entries(studentPositions)) {
+                if (activeStudents.includes(student)) {
+                    const [r, c] = pos.split('-').map(Number);
+                    if (r < rows && c < cols) matrix[r][c] = student;
+                }
+            }
+
+            const fillMode = document.getElementById('fillMode').value;
+            const studentsWithoutPos = activeStudents.filter(s => !studentPositions[s]);
+            let sIdx = 0;
+            const fillOrder = [];
+            if (fillMode === 'horizontal') {
+                for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) fillOrder.push([r,c]);
+            } else {
+                for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) fillOrder.push([r,c]);
+            }
+
+            fillOrder.forEach(([r,c]) => {
+                if (!matrix[r][c] && !blockedSlots.has(`${r}-${c}`) && sIdx < studentsWithoutPos.length) {
+                    matrix[r][c] = studentsWithoutPos[sIdx];
+                    studentPositions[studentsWithoutPos[sIdx]] = `${r}-${c}`;
+                    sIdx++;
+                }
+            });
+
+            for (let rIdx = 0; rIdx < rows; rIdx++) {
+                let r = isTeacherView ? (rows - 1 - rIdx) : rIdx;
+                for (let cIdx = 0; cIdx < cols; cIdx++) {
+                    let c = isTeacherView ? (cols - 1 - cIdx) : cIdx;
+                    const slot = document.createElement('div');
+                    slot.className = 'student-slot' + (blockedSlots.has(`${r}-${c}`) ? ' slot-blocked' : '');
+                    
+                    slot.onclick = (e) => {
+                        if (pendingMoveStudent) {
+                            if (blockedSlots.has(`${r}-${c}`)) { showStatus("Place condamnée !", true); return; }
+                            lastStudentPositions = JSON.parse(JSON.stringify(studentPositions));
+                            const targetStudent = matrix[r][c];
+                            const sourcePos = studentPositions[pendingMoveStudent];
+                            studentPositions[pendingMoveStudent] = `${r}-${c}`;
+                            if (targetStudent && targetStudent !== pendingMoveStudent) studentPositions[targetStudent] = sourcePos;
+                            pendingMoveStudent = null; generateGrid();
+                        } else if (e.target === slot) {
+                            const key = `${r}-${c}`;
+                            blockedSlots.has(key) ? blockedSlots.delete(key) : blockedSlots.add(key);
+                            generateGrid();
+                        }
+                    };
+                    
+                    slot.ondragover = (e) => e.preventDefault();
+                    slot.ondrop = (e) => {
+                        if (blockedSlots.has(`${r}-${c}`)) return;
+                        const name = e.dataTransfer.getData("student");
+                        lastStudentPositions = JSON.parse(JSON.stringify(studentPositions));
+                        const targetStudent = matrix[r][c];
+                        const sourcePos = studentPositions[name];
+                        studentPositions[name] = `${r}-${c}`;
+                        if (targetStudent) studentPositions[targetStudent] = sourcePos;
+                        generateGrid();
+                    };
+
+                    if (matrix[r][c]) {
+                        const name = matrix[r][c];
+                        const card = document.createElement('div');
+                        card.className = 'student-card' + 
+                                        (pendingMoveStudent === name ? ' moving-pending' : '') + 
+                                        (luckyStudentName === name ? ' lucky-student' : '') +
+                                        (lockedStudents.has(name) ? ' locked' : '');
+                        card.dataset.student = name; card.draggable = true;
+                        
+                        const span = document.createElement('span');
+                        span.textContent = name; span.contentEditable = true; span.spellcheck = false;
+                        span.onblur = () => renameStudent(name, span.textContent.trim());
+                        span.onkeydown = (ev) => { if(ev.key==='Enter'){ev.preventDefault(); span.blur();} };
+                        card.appendChild(span);
+                        
+                        card.oncontextmenu = (e) => {
+                            e.preventDefault();
+                            lockedStudents.has(name) ? lockedStudents.delete(name) : lockedStudents.add(name);
+                            generateGrid();
+                            showStatus(lockedStudents.has(name) ? `${name} verrouillé(e)` : `${name} déverrouillé(e)`);
+                        };
+
+                        card.ondragstart = (e) => {
+                            e.dataTransfer.setData("student", name);
+                            lastStudentPositions = JSON.parse(JSON.stringify(studentPositions));
+                        };
+                        const del = document.createElement('button');
+                        del.className = 'delete-btn'; del.innerHTML = '×';
+                        del.onclick = (e) => { e.stopPropagation(); deletedStudentNames.add(name); generateGrid(); };
+                        const mov = document.createElement('button');
+                        mov.className = 'move-btn'; mov.innerHTML = '⇄';
+                        mov.onclick = (e) => { e.stopPropagation(); pendingMoveStudent = name; generateGrid(); showStatus("Cliquez sur la destination"); };
+                        card.appendChild(del); card.appendChild(mov);
+                        slot.appendChild(card);
+                    }
+                    container.appendChild(slot);
+                    let colForAisle = isTeacherView ? (cols - 1 - cIdx) : (cIdx + 1);
+                    if (aislesVInput.includes(colForAisle) && cIdx < cols - 1) {
+                        const v = document.createElement('div'); v.className = 'aisle-v'; container.appendChild(v);
+                    }
+                }
+                let rowForAisle = isTeacherView ? (rows - 1 - rIdx) : (rIdx + 1);
+                if (aislesHInput.includes(rowForAisle) && rIdx < rows - 1) {
+                    const h = document.createElement('div'); h.className = 'aisle-h'; container.appendChild(h);
+                }
+            }
+        }
+
+        function addManualStudent() {
+            const input = document.getElementById('manualName');
+            const name = input.value.trim();
+            if (name) {
+                if (allStudents.includes(name)) { showStatus("Déjà présent", true); return; }
+                allStudents.push(name); input.value = ''; generateGrid(); showStatus(`"${name}" ajouté`);
+                input.focus();
+            }
+        }
+
+        function renameStudent(oldN, newN) {
+            if (!newN || oldN === newN) return;
+            const idx = allStudents.indexOf(oldN);
+            if (idx !== -1) allStudents[idx] = newN;
+            if (studentPositions[oldN]) { studentPositions[newN] = studentPositions[oldN]; delete studentPositions[oldN]; }
+            generateGrid();
+        }
+
+        async function initClasses() {
+            const container = document.getElementById('classesContainer');
+            container.innerHTML = "";
+            let order = await loadFromStorage('classes_order') || Array.from({length:8}, (_,i)=>`class-${i+1}`);
+            for (const id of order) {
+                const cNum = id.split('-')[1];
+                const meta = await loadFromStorage(`class_${cNum}_meta`) || {name: `Classe ${cNum}`};
+                const group = document.createElement('div');
+                group.className = 'class-group'; group.id = id; group.draggable = true;
+                group.innerHTML = `
+                    <div class="class-header"><input type="text" class="class-name-input" value="${meta.name}" onchange="saveToStorage('class_${cNum}_meta', {name:this.value}); updateLayoutTitle();"></div>
+                    <div class="saves-container">
+                        ${[1,2,3].map(s => `<div class="save-slot" id="save-${cNum}-${s}">
+                            <input type="text" class="save-name-input" id="name-input-${cNum}-${s}" value="Activité ${s}" onchange="saveToStorage('class_${cNum}_save_${s}_name', this.value); updateLayoutTitle();">
+                            <div class="save-buttons">
+                                <button class="btn-load" onclick="handleAction(event, ${cNum}, ${s})" title="Clic: Charger | Alt+Clic: Sauvegarder">✅</button>
+                                <button class="btn-reset" onclick="resetSave(${cNum}, ${s})">×</button>
+                            </div>
+                        </div>`).join('')}
+                    </div>`;
+                group.ondragstart = function(e) { draggedClass = this; this.style.opacity = '0.4'; };
+                group.ondragover = (e) => e.preventDefault();
+                group.ondrop = function(e) {
+                    if (draggedClass !== this) {
+                        const nodes = Array.from(container.children);
+                        nodes.indexOf(draggedClass) < nodes.indexOf(this) ? this.after(draggedClass) : this.before(draggedClass);
+                        saveToStorage('classes_order', Array.from(container.children).map(c => c.id));
+                    }
+                    draggedClass.style.opacity = '1';
+                };
+                container.appendChild(group);
+                for(let s=1; s<=3; s++) { 
+                    const customName = await loadFromStorage(`class_${cNum}_save_${s}_name`);
+                    if(customName) document.getElementById(`name-input-${cNum}-${s}`).value = customName;
+                    if(await loadFromStorage(`class_${cNum}_save_${s}`)) document.getElementById(`save-${cNum}-${s}`).classList.add('filled'); 
+                }
+            }
+        }
+
+        function handleAction(e, c, s) { e.altKey ? saveCurrent(c, s) : loadCurrent(c, s); }
+
+        async function saveCurrent(c, s) {
+            const slotName = document.getElementById(`name-input-${c}-${s}`).value;
+            const data = {
+                allStudents, deletedStudents: Array.from(deletedStudentNames),
+                blockedSlots: Array.from(blockedSlots), 
+                lockedStudents: Array.from(lockedStudents),
+                studentPositions,
+                rows: document.getElementById('rowsInput').value,
+                cols: document.getElementById('colsInput').value,
+                aisles: document.getElementById('aislePositions').value,
+                aislesH: document.getElementById('aisleHPositions').value,
+                fill: document.getElementById('fillMode').value,
+                classMessage: document.getElementById('classMessageInput').value
+            };
+            await saveToStorage(`class_${c}_save_${s}`, data);
+            await saveToStorage(`class_${c}_save_${s}_name`, slotName);
+            document.getElementById(`save-${c}-${s}`).classList.add('filled');
+            showStatus("Sauvegardé");
+        }
+
+        async function loadCurrent(c, s) {
+            const data = await loadFromStorage(`class_${c}_save_${s}`);
+            if(!data) return showStatus("Vide", true);
+            currentLoadedClass = c; currentLoadedSlot = s;
+            allStudents = data.allStudents;
+            deletedStudentNames = new Set(data.deletedStudents);
+            blockedSlots = new Set(data.blockedSlots);
+            lockedStudents = new Set(data.lockedStudents || []);
+            studentPositions = data.studentPositions;
+            document.getElementById('rowsInput').value = data.rows;
+            document.getElementById('colsInput').value = data.cols;
+            document.getElementById('aislePositions').value = data.aisles;
+            document.getElementById('aisleHPositions').value = data.aislesH || "";
+            document.getElementById('fillMode').value = data.fill;
+            document.getElementById('classMessageInput').value = data.classMessage || "";
+            document.querySelectorAll('.class-group').forEach(g => g.classList.remove('active'));
+            document.getElementById(`class-${c}`).classList.add('active');
+            document.querySelectorAll('.save-slot').forEach(sl => sl.classList.remove('active-memory'));
+            document.getElementById(`save-${c}-${s}`).classList.add('active-memory');
+            isTeacherView = false; updateLayoutTitle();
+            luckyStudentName = null; generateGrid(); showStatus("Chargé");
+            document.getElementById('controlsWrapper').classList.add('hidden');
+        }
+
+        function pickRandomStudent() {
+            const active = allStudents.filter(s => !deletedStudentNames.has(s));
+            if(!active.length) return;
+            luckyStudentName = active[Math.floor(Math.random()*active.length)];
+            generateGrid();
+            const modal = document.getElementById('genericModal');
+            modal.style.color = '#000'; modal.style.fontSize = '2.5em'; 
+            modal.innerHTML = luckyStudentName;
+            modal.style.display = 'block'; document.getElementById('modalOverlay').style.display = 'block';
+            setTimeout(closeModal, 3000);
+        }
+
+        function showClassMessage() {
+            const msg = document.getElementById('classMessageInput').value; 
+            if (!msg.trim()) { showStatus("Veuillez saisir un message dans les paramètres", true); return; }
+            const modal = document.getElementById('genericModal'); 
+            modal.style.color = '#1976d2'; modal.style.fontSize = '1.8em';
+            modal.innerHTML = msg;
+            modal.style.display = 'block'; document.getElementById('modalOverlay').style.display = 'block';
+            if(window.renderMathInElement) renderMathInElement(modal, {delimiters: [{left: "$", right: "$", display: false}]});
+        }
+
+        function toggleInfo() {
+            const m = document.getElementById('infoModal'); const o = document.getElementById('modalOverlay');
+            const vis = m.style.display === 'block'; m.style.display = vis ? 'none' : 'block'; o.style.display = vis ? 'none' : 'block';
+        }
+
+        function closeModal() { 
+            document.getElementById('genericModal').style.display='none'; document.getElementById('infoModal').style.display='none';
+            document.getElementById('modalOverlay').style.display='none'; 
+        }
+
+        function exportAllData() {
+            const allData = { classes: {} };
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                try { allData.classes[key] = JSON.parse(localStorage.getItem(key)); } catch(e) { allData.classes[key] = localStorage.getItem(key); }
+            }
+            const blob = new Blob([JSON.stringify(allData, null, 2)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Plans de classes memo.json'; a.click();
+            showStatus("Export terminé");
+        }
+
+        async function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const importedData = JSON.parse(e.target.result);
+                localStorage.clear();
+                for (const [key, value] of Object.entries(importedData.classes)) { await saveToStorage(key, value); }
+                location.reload(); 
+            };
+            reader.readAsText(file);
+        }
+
+        function showStatus(m, err=false) {
+            const s = document.getElementById('statusMsg'); s.textContent = m; s.style.background = err ? '#f44336' : '#4caf50';
+            s.style.display = 'block'; setTimeout(()=> s.style.display='none', 2000);
+        }
+        function toggleControls() { document.getElementById('controlsWrapper').classList.toggle('hidden'); }
+        function reorderStudents() {
+			// On trie la liste complète (CSV + manuels) par ordre alphabétique
+			allStudents.sort((a, b) => a.localeCompare(b, 'fr', {sensitivity: 'base'}));
+			
+			// On réinitialise les positions pour forcer le nouveau placement
+			studentPositions = {}; 
+			generateGrid();
+			showStatus("Tri alphabétique appliqué");
+		}
+        function resetSave(c, s) { if(confirm("Effacer ?")){ localStorage.removeItem(`class_${c}_save_${s}`); localStorage.removeItem(`class_${c}_save_${s}_name`); location.reload(); } }
+
+        document.getElementById('csvFile').onchange = function(e) {
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const lines = ev.target.result.split('\n').filter(l => l.trim());
+                allStudents = lines.slice(1).map(l => l.split(/[;,]/)[0].replace(/"/g,'').trim());
+                studentPositions = {}; generateGrid();
+            };
+            r.readAsText(e.target.files[0]);
+        };
+
+        window.onkeydown = (e) => {
+			// Vérifie si l'utilisateur est dans un input, un textarea 
+			// OU s'il est en train de modifier un élément contentEditable (comme vos cartes élèves)
+			const isTyping = 
+				document.activeElement.tagName === 'INPUT' || 
+				document.activeElement.tagName === 'TEXTAREA' ||
+				document.activeElement.isContentEditable; // Ajout de cette condition importante
+			
+			// Le raccourci Échap reste fonctionnel pour fermer les réglages même en saisie
+			if (e.key === 'Escape') {
+				e.preventDefault();
+				toggleControls();
+				return;
+			}
+
+			// On ne traite les autres raccourcis QUE si on n'est pas en train d'écrire
+			if (!isTyping) {
+				if (e.key === '+' || e.key === '=') { e.preventDefault(); changeZoom(0.1); }
+				if (e.key === '-' || e.key === '_') { e.preventDefault(); changeZoom(-0.1); }
+				if (e.code === 'Space') { e.preventDefault(); pickRandomStudent(); }
+				if (e.key === '0') { e.preventDefault(); toggleView(); }
+				if (e.key === 'm' || e.key === 'M') { e.preventDefault(); showClassMessage(); }
+				if (e.key === 'a' || e.key === 'A') { e.preventDefault(); shuffleStudents(); }
+				if ((e.key === 'z' || e.key === 'Z') && e.ctrlKey) {
+					e.preventDefault();
+					if(lastStudentPositions) {
+						const checkConflict = Object.values(lastStudentPositions).some(pos => blockedSlots.has(pos));
+						if (checkConflict) { showStatus("Annulation impossible : table condamnée", true); } 
+						else { studentPositions = JSON.parse(JSON.stringify(lastStudentPositions)); lastStudentPositions = null; generateGrid(); showStatus("Annulé"); }
+					}
+				}
+			}
+		};
+
+        initClasses();
+        generateGrid();
+    </script>
+</body>
+</html>
