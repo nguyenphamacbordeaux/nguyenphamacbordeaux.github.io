@@ -117,25 +117,7 @@
     </style>
 </head>
 <body>
-<script>
-    // Vérifie si l'utilisateur est connecté
-    if (localStorage.getItem("logged") !== "true") {
-        // Si pas connecté, redirige vers login.html
-        window.location.href = "login.html";
-    }
-</script>
 
-<!-- Bouton de déconnexion (optionnel) -->
-<button onclick="logout()" style="position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; z-index: 1000;">
-    Déconnecter
-</button>
-
-<script>
-    function logout() {
-        localStorage.removeItem("logged");
-        window.location.href = "login.html";
-    }
-</script>
     <header>
         <h1>Mes Outils Pédagogiques</h1>
         <p>Lycée V&aacuteclav Havel | Mathématiques & SNT</p>
