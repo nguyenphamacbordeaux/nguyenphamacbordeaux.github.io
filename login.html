@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Espace Pédagogique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-container h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🔒 Espace Pédagogique</h1>
+        <form onsubmit="login(event)">
+            <div class="form-group">
+                <label for="password">Mot de passe :</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    placeholder="Entrez le mot de passe"
+                    required
+                    autofocus
+                >
+            </div>
+            <button type="submit">Se connecter</button>
+            <div class="error" id="error">❌ Mot de passe incorrect</div>
+        </form>
+    </div>
+
+    <script>
+        const PASSWORD = "motdepasse123"; // ⚠️ CHANGEZ CETTE VALEUR
+
+        function login(event) {
+            event.preventDefault();
+            const inputPassword = document.getElementById("password").value;
+            const errorDiv = document.getElementById("error");
+
+            if (inputPassword === PASSWORD) {
+                // Sauvegarder la session
+                localStorage.setItem("logged", "true");
+                // Rediriger vers index.html
+                window.location.href = "index.html";
+            } else {
+                errorDiv.style.display = "block";
+                document.getElementById("password").value = "";
+            }
+        }
+    </script>
+</body>
+</html>
