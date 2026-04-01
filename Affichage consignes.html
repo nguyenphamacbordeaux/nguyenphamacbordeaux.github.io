@@ -286,6 +286,7 @@
             <p style="font-size: 0.8em; opacity: 0.6;">Préréglages :</p>
             <div style="cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; margin-top:5px; border-radius:5px;" onclick="loadPreset('ds')">📝 Devoir Surveillé</div>
             <div style="cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; margin-top:5px; border-radius:5px;" onclick="loadPreset('automatisme')">⚡ Automatismes</div>
+            <div style="cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; margin-top:5px; border-radius:5px;" onclick="loadPreset('python')">🐍 Python</div>
             <div style="cursor:pointer; background:rgba(255,255,255,0.1); padding:8px; margin-top:5px; border-radius:5px;" onclick="loadPreset('bac')">🎓 Baccalauréat</div>
             <button class="btn" style="background:#f44336; color:white; margin-top: 15px;" onclick="location.reload()">Réinitialiser</button>
         </div>
@@ -344,6 +345,7 @@
         const presets = {
             ds: { title: "Devoir Surveillé", duration: 55, instructions: "Aucun objet connecté sur soi:\nTéléphone et montre dans le sac posé par terre.\n Oreilles dégagées.\n\nComposer directement sur le sujet, si besoin vous completerez avec des feuilles simples numérotées avec marge à gauche\nPenser à encadrer vos réponses avant de passer à la question suivante.\n\nBon travail !", end: "Poser vos stylos\n\nMettre le sujet dans votre copie double\nFaire remonter les copies au voisin de devant en mettant la votre au dessus de la pile" },
             automatisme: { title: "Automatismes", duration: 15, instructions: "SANS CALCULATRICE\nRemplir le tableau réponses au stylo non effaçable\n\nBon courage !", end: "Poser vos stylos\n\nFaire remonter les copies au voisin de devant en mettant la votre au dessus de la pile" },
+            python: { title: "DS Python", duration: 30, instructions: "Remplir directement sur le sujet au stylo non effaçable\n\nBon courage !", end: "Poser vos stylos\n\nFaire remonter les copies au voisin de devant en mettant la votre au dessus de la pile" },
             bac: { title: "Baccalauréat", duration: 240, instructions: "Aucun objet connecté sur soi:\nTéléphone et montre dans le sac posé à l'entrée de la salle.\n Oreilles dégagées.\n\nRemplir les entêtes et les numérotations de pages durant le temps imparti\n\nSortie autorisée après 1h\nEn fin d'épreuve, remettre votre copie aux surveillants et récupérer votre convocation après avoir signé la feuille de présence\n\n Bon travail !", end: "Poser vos stylos\n\nRendre votre copie aux surveillants et récupérer votre convocation après avoir signé la feuille de présence" }
         };
 
