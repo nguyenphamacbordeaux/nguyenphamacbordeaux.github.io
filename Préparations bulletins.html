@@ -35,20 +35,23 @@
     <h2>Générateur d'Appréciations</h2>
 
     <div class="section" style="border-left: 5px solid #1a5c96;">
-        <div class="context-grid">
-            <div><label>Discipline</label><input type="text" id="subject" value="Mathématiques"></div>
-            <div><label>Établissement</label><input type="text" id="school" value="Lycée de Bègles"></div>
-            <div><label>Classe</label><input type="text" id="className" placeholder="Ex: 4ème C..."></div>
-            <div>
-                <label>Période</label>
-                <div style="display: flex; gap: 5px;">
-                    <select id="pType" onchange="updatePeriodNumbers()" style="flex: 2;">
-                        <option value="Trimestre">Trimestre</option><option value="Semestre">Semestre</option>
-                    </select>
-                    <select id="pNum" style="flex: 1;"></select>
-                </div>
-            </div>
-        </div>
+			<div class="context-grid">
+				<div><label>Discipline</label><input type="text" id="subject" value="Mathématiques"></div>
+				<div><label>Établissement</label><input type="text" id="school" value="Lycée de Bègles"></div>
+				<div><label>Classe</label><input type="text" id="className" placeholder="Ex: 2nde 1, 1ère Spé..."></div>
+				<div>
+					<label>Période</label>
+					<div style="display: flex; gap: 5px;">
+						<select id="pType" onchange="updatePeriodNumbers()" style="flex: 2;">
+							<option value="Trimestre">Trimestre</option><option value="Semestre">Semestre</option>
+						</select>
+						<select id="pNum" style="flex: 1;"></select>
+					</div>
+				</div>
+				<div><label>Date du conseil</label><input type="date" id="councilDate"></div>
+				<div><label>Salle</label><input type="text" id="room" placeholder="Ex: Salle 102"></div>
+				<div><label>Président du conseil</label><input type="text" id="president" placeholder="Nom du Proviseur/Adjoint"></div>
+			</div>
     </div>
 
     <div class="section file-upload" onclick="document.getElementById('csvFile').click()">
@@ -212,11 +215,16 @@
     function deleteStudent(index) { studentData.splice(index, 1); renderPreview(); }
 
     function generatePrompt() {
-        const disc = document.getElementById('subject').value;
-        const school = document.getElementById('school').value;
-        const cls = document.getElementById('className').value;
-        const period = `${document.getElementById('pType').value} ${document.getElementById('pNum').value}`;
-        const classObs = document.getElementById('classObservation').value;
+		const disc = document.getElementById('subject').value;
+		const school = document.getElementById('school').value;
+		const cls = document.getElementById('className').value;
+		const period = `${document.getElementById('pType').value} ${document.getElementById('pNum').value}`;
+		const classObs = document.getElementById('classObservation').value;
+		
+		// Récupération des nouveaux champs
+		const cDate = document.getElementById('councilDate').value;
+		const cRoom = document.getElementById('room').value;
+		const cPres = document.getElementById('president').value;
         
         let p = `Tu es enseignant de ${disc} au ${school}. 
 Rédige les appréciations (2-3 phrases) pour la classe de ${cls} (${period}).
@@ -237,7 +245,15 @@ je souhaite également:
         });
 
         if (document.getElementById('useLatex').checked) {
-            p += `\nProduis le code LaTeX complet avec titre, bilan de classe avec  tableau de synthèse terminant par une colonne permettant de saisir l'avis du conseil, un tableau donnant la répartition du nombre d'élèves dans les différentes plages de notes pour les différentes catégories de notes et enfin le détails individuels.Dans le tableau LaTeX, laisse les cases vides si l'élève n'a pas de note dans une catégorie.\nJe souhaite le code complet.\nSTRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\title{\\textbf{{{titre}: {{theme}}}}}\n\\author{\\PhamN}\n\\date{}\n\n\\begin{document}...`;
+            p += `\nProduis le code LaTeX complet avec titre, bilan de classe avec  tableau de synthèse terminant par une colonne permettant de saisir l'avis du conseil, un tableau donnant la répartition du nombre d'élèves dans les différentes plages de notes pour les différentes catégories de notes et enfin le détails individuels.Dans le tableau LaTeX, laisse les cases vides si l'élève n'a pas de note dans une catégorie.\nJe souhaite le code complet.\nSTRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\title{\\textbf{{{titre}: {{theme}}}}}\n\\author{\\PhamN}\n\\date{}\n\n\\begin{document}\n\\begin{center}
+    \\Large \\textbf{Conseil de Classe : ${cls}} \\\\
+    \\large ${period} --- ${disc} \\\\
+    \\medskip
+    \\normalsize
+    \\textbf{Date :} ${cDate} \\hfill \\textbf{Salle :} ${cRoom} \\\\
+    \\textbf{Président du conseil :} ${cPres}
+\\end{center}
+\\hrule \\medskip\n Je souhaite dans l'ordre: 1.le bilan, 2.le tableau de répartition, 3.le tableau de synthèse et enfin 4.les appréciations personnelles`;
         }
         
         document.getElementById('promptText').value = p;
