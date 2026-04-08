@@ -8,32 +8,40 @@
             --primary: #2c3e50;
             --accent: #3498db;
             --bg: #f4f7f6;
+            --sidebar-width: 500px;
         }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1100px; margin: 20px auto; background-color: var(--bg); color: var(--primary); }
         .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); position: relative; }
         h2 { border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-top: 0; display: flex; align-items: center; justify-content: space-between; }
-        
+
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
         .field { margin-bottom: 10px; }
         .full-width { grid-column: span 4; }
         label { display: block; font-weight: bold; margin-bottom: 6px; font-size: 0.9em; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid #d1d8e0; border-radius: 8px; box-sizing: border-box; }
-        
+
         .button-group { display: flex; gap: 15px; margin: 25px 0; flex-wrap: wrap; }
         .btn-prompt { flex: 1; min-width: 180px; padding: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.3s; color: white; }
         .btn-prompt:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        
+
         #advice-display { margin: 10px 0; padding: 15px; background: #fff9db; border-left: 5px solid #f1c40f; border-radius: 8px; display: none; font-style: italic; color: #856404; }
 
-        .info-icon { cursor: pointer; font-size: 24px; color: var(--accent); transition: 0.2s; }
-        .info-icon:hover { transform: scale(1.1); }
+        #sidebar { position: fixed; right: -550px; top: 0; width: var(--sidebar-width); height: 100%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transition: 0.4s cubic-bezier(0.075, 0.82, 0.165, 1); z-index: 1000; padding: 25px; overflow-y: auto; }
+        #sidebar.active { right: 0; }
+        .settings-icon { cursor: pointer; font-size: 24px; }
+        .close-sidebar { float: right; cursor: pointer; color: #e74c3c; font-weight: bold; font-size: 18px; }
         
+        .config-button-item { background: #f1f3f5; padding: 12px; margin-bottom: 8px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border: 1px solid #e9ecef; }
+        .config-button-item:hover { background: #e9ecef; }
+        .config-details { border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; background: #fafafa; }
+        .config-details.open { display: block; }
+
         #result-container { position: relative; margin-top: 20px; }
         #result { width: 100%; height: 450px; font-family: 'Fira Code', monospace; font-size: 13px; padding: 20px; border-radius: 10px; background: #2d3436; color: #dfe6e9; line-height: 1.6; resize: vertical; }
         .copy-badge { position: absolute; top: 75px; right: 25px; background: #00b894; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; display: none; z-index: 10; }
-        
-        .btn-copy-gemini { background: #1a73e8; margin-bottom: 10px; padding: 14px; font-size: 14px; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-copy-gemini:hover { background: #1557b0; }
+
+        .small-btn { padding: 8px 12px; font-size: 12px; cursor: pointer; border-radius: 4px; border: 1px solid #ddd; background: white; margin-top: 10px; }
+        .btn-danger { background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -41,25 +49,25 @@
 <div class="container">
     <h2>
         <span>📝 Générateur de Prompts Personnalisés</span>
-        <span class="info-icon" onclick="showInfo()" title="Informations">ⓘ</span>
+        <span class="settings-icon" onclick="toggleSidebar()">⚙️</span>
     </h2>
-    
+
     <div class="grid">
-        <div class="field"><label>Titre :</label><input type="text" id="titre" placeholder="Ex: TD"></div>
+        <div class="field"><label>Titre :</label><input type="text" id="titre" placeholder="Ex: Chapitre 1"></div>
         <div class="field">
             <label>Classe :</label>
             <select id="classe">
                 <option value="Seconde">Seconde</option>
-                <option value="Première Spécialité">Première Spécialité</option>
-                <option value="Première ST2S">Première ST2S</option>
-                <option value="Terminale ST2S">Terminale ST2S</option>
-                <option value="Terminale Générale">Terminale Générale</option>
+                <option value="Première Spécialité">1ère Spécialité</option>
+                <option value="Première ST2S">1ère ST2S</option>
                 <option value="Terminale Spécialité">Terminale Spécialité</option>
-                <option value="Terminale Complémentaire">Terminale Complémentaire</option>
+                <option value="Terminale Générale">Terminale Générale</option>
+                <option value="Terminale ST2S">Terminale ST2S</option>
+                <option value="Terminale Complémentaires">Terminale Complémentaires</option>
                 <option value="Terminale Expert">Terminale Expert</option>
             </select>
         </div>
-		<div class="field"><label>Durée en min:</label><input type="text" id="duree" placeholder="Ex: 55 min"></div>
+		<div class="field"><label>Durée en min:</label><input type="text" id="duree" placeholder="Ex: 1h ou 55 min"></div>
         <div class="field"><label>Thème :</label><input type="text" id="theme" placeholder="Ex: Logarithme"></div>
 		<div class="field" style="display: flex; align-items: center; gap: 10px; grid-column: span 2;">
 			<input type="checkbox" id="no_python" style="width: auto;">
@@ -76,15 +84,34 @@
     <div id="result-container">
         <div id="advice-display"></div>
         <span id="copy-status" class="copy-badge">Copié !</span>
-		<button onclick="copyAndOpenGemini()" class="btn-copy-gemini">
+		<button onclick="copyAndOpenGemini()" style="background: #1a73e8; margin-bottom: 10px; padding: 14px; font-size: 14px; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
 		🚀 Copier le prompt et ouvrir Gemini
 		</button>
         <textarea id="result" placeholder="Le prompt généré apparaîtra ici..."></textarea>
     </div>
 </div>
 
+<div id="sidebar">
+    <span class="close-sidebar" onclick="toggleSidebar()">✖</span>
+    <h3>Configuration</h3>
+    
+    <div id="config-list"></div>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+    <button onclick="addPromptConfig()" style="background: #27ae60; color:white; width:100%; padding:12px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">+ Ajouter un nouveau bouton</button>
+    
+    <div style="display:flex; gap:10px; margin-top:15px;">
+        <button onclick="exportConfig()" class="small-btn" style="flex:1">📤 Exporter</button>
+        <button onclick="document.getElementById('importFile').click()" class="small-btn" style="flex:1">📥 Importer</button>
+        <input type="file" id="importFile" style="display:none" onchange="importConfig(event)">
+    </div>
+
+    <button onclick="resetConfig()" class="btn-danger">⚠️ Réinitialiser le programme (MàJ Code)</button>
+    <p style="font-size: 0.75em; color: #999; text-align: center; margin-top: 10px;">Efface la mémoire locale pour appliquer vos modifs du script HTML.</p>
+</div>
+
 <script>
-    const config = {
+    let config = {
         prompts: [
             { 
                 id: 'ACT', label: '📝 Générer l\'Activité', color: '#27ae60', advice: "🆔Tu peux proposer des activités imposées.",
@@ -98,18 +125,40 @@
                 id: 'TD', label: '⚙️ Générer le Travail Dirigé', color: '#3498db', advice: "📁 Tu peux fournir le cours 🆔 Tu peux aussi citer tous les points essentiels à retenir.",
                 content: "En tant qu'enseignant, rédige un travail dirigé en LaTeX titrée {{titre}} pour des élèves de {{classe}}\n{{contrainte}}\n{{no_python}}\n### INSTRUCTION DE CONTEXTE : Si un contenu de cours a été fourni précédemment, base-toi prioritairement sur ses notations, démonstrations et méthodes.\n\n### STRUCTURE DU CONTENU :\nUne partie \"L'essentiel à retenir\" résumant le chapitre {{theme}} (formules et graphiques TikZ).\nUne partie \"Exercices d'application\" contenant 10 exercices d'application directe.\nUne partie \"Exercices d'approfondissement\" contenant 10 exercices d'approfondissement.\n\n- Je ne veux aucune référence ou citation\n- N'utilise pas de balise subsection\n- Pour python utilise l'environnement verbatim\n- Je souhaite le code complet \n### STRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}\n\n\\usepackage{tabularx}\n\\newcommand{\\classe}{{{classe}}}\n\\newcommand{\\titre}{{{titre}}}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\newcommand{\\theme}{{{theme}}}\n\\newcommand{\\matiere}{Math}\n\\newcommand{\\duree}{{{duree}}}\n\\newcommand{\\entetperso}[1]{\n\\noindent\n\\begin{tabularx}{\\textwidth}{|l >{\\centering\\arraybackslash}X r|}\n\\hline\n\\textbf{\\classe} & \\textbf{Lyc\\'ee V\\'aclav Havel} & \\PhamN\\\\\n\\hline\nNom : & \\textbf{\\titre} &  \\textbf{\\theme} \\\\\nPr\\'enom : & #1 & \\textbf{\\matiere} \\\\\n\\hline\n\\end{tabularx}\n\\vspace{0.3cm}}\n\\begin{document}\n\\enteteperso{}\n\\section{L'essentiel du cours}\n\\begin{enumerate}\n... à remplir ...\n\\end{enumerate}\n\\section{Exercices d'application}\n\\begin{enumerate}\n... à remplir ...\n\\end{enumerate}\n\\section{Exercices d'approfondissement}\n\\begin{enumerate}\n... à remplir ...\n\\end{enumerate}\nUtilise \\vspace pour laisser suffisament de place pour répondre à chaque exercice et occuper l'intégralité des lignes des 4 pages sans utiliser \\newpage afin de l'imprimer au format livret" 
             },
+			{ 
+                id: 'TF', label: '⚙️ Générer le Travail Final', color: '#3498db', advice: "📁 Tu peux fournir le cours 🆔 Tu peux aussi citer tous les points essentiels à retenir.",
+                content: "En tant qu'enseignant, rédige un travail final en LaTeX titrée {{titre}} pour des élèves de {{classe}}\n{{contrainte}}\n{{no_python}}\n### INSTRUCTION DE CONTEXTE : Si un contenu de cours a été fourni précédemment, base-toi prioritairement sur ses notations, démonstrations et méthodes.\n\n### STRUCTURE DU CONTENU :\nune partie bilan des compétences relatives à ce chapitre avec des cases à cocher pour acquis, en cours d'acquisition et non acquis.\nUne partie \"Exercices d'évaluation\" contenant 5 exercices type examen avec mise en situation.\n- je souhaite que chaque exercice contienne au moins 6 questions s'enchaînant logiquement avec une démarche d'investigation ou de recherche.\n\n- Je ne veux aucune référence ou citation\n- N'utilise pas de balise subsection\n- Pour python utilise l'environnement verbatim\n- Je souhaite le code complet \n### STRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}\n\n\\usepackage{tabularx}\n\\newcommand{\\classe}{{{classe}}}\n\\newcommand{\\titre}{{{titre}}}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\newcommand{\\theme}{{{theme}}}\n\\newcommand{\\matiere}{Math}\n\\newcommand{\\duree}{{{duree}}}\n\\newcommand{\\entetperso}[1]{\n\\noindent\n\\begin{tabularx}{\\textwidth}{|l >{\\centering\\arraybackslash}X r|}\n\\hline\n\\textbf{\\classe} & \\textbf{Lyc\\'ee V\\'aclav Havel} & \\PhamN\\\\\n\\hline\nNom : & \\textbf{\\titre} &  \\textbf{\\theme} \\\\\nPr\\'enom : & #1 & \\textbf{\\matiere} \\\\\n\\hline\n\\end{tabularx}\n\\vspace{0.3cm}}\n \setlist[enumerate]{label=\arabic*., ref=\arabic*}\n \\begin{document}\n\\enteteperso{}\n\\section{Bilan des compétences}\n... sous forme de tableau ...\n\\section{Exercices d'évaluation}\n\\begin{enumerate}\n... à remplir ...\n\\end{enumerate}\nJe souhaite que tout le TF tienne sur 2 pages au maximum" 
+            },
             { 
                 id: 'DS', label: '📄 Générer le Devoir Surveillé', color: '#e67e22', advice: "📁 Ne pas oublier de charger le cours et / ou le TD pour inspirer le DS.",
                 content: "En tant qu'enseignant, rédige un devoir surveillé en LaTeX, titrée {{titre}} noté sur 20 points en LaTeX  pour une classe de {{classe}} sur le theme {{theme}} d'une durée de {{duree}}\n{{contrainte}}\n{{no_python}}\n### INSTRUCTION DE CONTEXTE : Si du contenu de TD a été fourni précédemment, inspire toi de ses exercices.\nSi plusieurs thèmes sont abordés, équilibre les thèmes dans les exercices proposés\n### STRUCTURE DU CONTENU :\n- Exercice 1 : QCU de 4 questions, avec 4 propositions a, b, c et d classées par ordre croissant et non alphabétique, écrites sur la ligne suivante et séparées par \\quad puis sur la même ligne \\hfill Qnuméro:\\dots \\vspace{0.5cm}\nÉnoncé de l'exercice 1: \\noindent \\textit{\\textbf{Consigne: }Pour chaque question, une seule réponse est exacte. Écrire la lettre correspondante $\\Downarrow$.}\n-2 exercices de type application directe en les nommant judicieusement, avec 2 questions et notés sur 2 points.\n-Pour les devoirs de moins de 60 minutes : deux exercices de type évaluation, en les nommant judicieusement, avec 6 questions s'enchaînant dans une logique de recherche.\n-Pour les devoirs de 90 minutes : trois exercices de type évaluation, en les nommant judicieusement, avec 6 questions s'enchaînant dans une logique de recherche.\n-Pour les devoirs de plus de 100 minutes : trois exercices de type évaluation, en les nommant judicieusement, avec 8 questions s'enchaînant dans une logique de recherche.\n-à la fin de chaque sujet, complète avec des lignes vierges en utilisant \\lignesreponse pour compléter les 150 lignes disponibles sur 4 pages.\n-Génère deux versions (A et B) avec des exercices distincts mais une difficulté équilibrée.\n-Je souhaite également une version PAP c'est à dire exactement la version A tronquée d'une question dans chaque exercice pour être évaluée sur 15 points, sans modifier les questions restantes et la présentation\n- Je souhaite également les corrections détaillés en forçant le retour à la ligne à chaque question\n-Dans la correction de la version A, il faut discrètement marquer d'un astérisque les numéros des questions retirées pour la version PAP.\n-Je ne veux aucune référence ou citation\n-N'utilise pas de balise subsection\n-Pour python utilise l'environnement verbatim\n-Je souhaite le code complet\n### STRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}\n\n\\usepackage{tabularx}\n\\newcommand{\\classe}{Seconde}\n\\newcommand{\\titre}{{{titre}}}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\newcommand{\\theme}{{{theme}}}\n\\newcommand{\\matiere}{Math}\n\\newcommand{\\duree}{{{duree}}}\n\\newcommand{\\entetperso}[1]{\n\\noindent\n\\begin{tabularx}{\\textwidth}{|l >{\\centering\\arraybackslash}X r|}\n\\hline\n\\textbf{\\classe} & \\textbf{Lyc\\'ee V\\'aclav Havel} & \\PhamN\\\\\n\\hline\nNom : & \\textbf{\\titre} &  \\textbf{\\theme} \\\\\nPr\\'enom : & #1 & \\textbf{\\matiere} {\\duree} \\\\\n\\hline\n\\end{tabularx}}\n\\vspace{-1pt}\\noindent\n\\begin{tabularx}{\\textwidth}{|p{3cm}|X|}\\hline\\textbf{Note :} & \\textbf{Commentaires :} \\\\\n\\hfil \\Huge \\qquad/20 & \\\\\n\\hline\n\\end{tabularx}\n\\begin{center}\n\\textit{\\small La qualit\\'e de la r\\'edaction, la clart\\'e et la pr\\'ecision des raisonnements seront prises en compte.}\n\\end{center}\n\\hrule\n\\vspace{0.5cm}}\n\\newcommand{\\lignesreponse}[1]{\\foreach \\i in {1,...,#1} {\n\\noindent\\hspace*{2cm}\\rule{\\dimexpr\\linewidth-2cm\\relax}{0.1pt}\\par \n\\vspace{0.5cm}}}\n\\setlist[enumerate]{label=\arabic*., ref=\arabic*}\n\\begin{document}\n\\pagestyle{empty}\n\n- Chaque sujet doit commencer par la balise \\enteteperso{Version} et finir par la balise \\newpage\n- Chaque correction doit commencer par la balise \\section*{Correction Version }\n- Utilise la balise \\begin{enumerate} pour les exercices\n- Utilise \\noindent au début de chaque exercice\n- Utilise l'environnement verbatim pour Python" 
             },
+			{ 	id: 'QCU', label: '🔡 Générer un QCU', color: '#1abc9c', advice: "📁Charger le sujet.🔢 Modifier le nombre de questions.",
+				content: "En tant qu'enseignant, rédige un QCU en LaTeX, titrée {{titre}} pour une classe de Première ST2S sur le theme {{theme}}\n{{contrainte}}\n{{no_python}}\n### INSTRUCTION DE CONTEXTE : Si du contenu de TD a été fourni précédemment, inspire toi de ses exercices.\n### STRUCTURE DU CONTENU :\n- QCU de 12 questions, avec 4 propositions a, b, c et d séparées par \\quad puis sur la même ligne \\hfill Qnuméro:\\dots\n- Génère une version initiale avec ces questions sa bonne réponse et ses trois distracteurs.\n- puis génère une version A en mélangeant aléatoirement l'ordre des questions et en fixant l'ordre croissant et alphabétique pour les réponses.\n- puis génère une version B en remélangeant encore l'ordre des questions mais en fixant l'ordre décroissant et alphabétique pour les réponses.\n- Je souhaite une correction de la version initiale qui rappelle l'énoncé de la question, donne la correction détaillée sans donner la lettre réponse et saute une ligne.\n- Sur une page à part, je souhaite un tableau récapitulatif avec en ligne les versions A et B, en colonne les questions et les bonnes réponses aux intersections, au delà de quinze questions, ce tableau doit etre en deux parties.\n- je souhaite également connaitre la proportion de bonnes réponses a, b, c et d pour chaque version.\n- Je ne souhaite aucune citation.\n### STRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, eurosym, tikz,tkz-tab, multicol}\n\\geometry{margin=1.5cm}\n\n\\usepackage{tabularx}\n\\newcommand{\\classe}{Seconde}\n\\newcommand{\\titre}{{{titre}}}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\newcommand{\\theme}{{{theme}}}\n\\newcommand{\\matiere}{Math}\n\\newcommand{\\duree}{1h}\n\\newcommand{\\entetperso}[1]{\n\\noindent\n\\begin{tabularx}{\\textwidth}{|l >{\\centering\\arraybackslash}X r|}\n\\hline\n\\textbf{\\classe} & \textbf{Lyc\\'ee V\\'aclav Havel} & \\PhamN\n\\hline\nNom : & \textbf{\\titre} &  \textbf{\\theme} \\\nPr\'enom : & #1 & \textbf{\\matiere}{\\duree} \\\n\\hline\n\\end{tabularx}\\hrule\n\\vspace{0.5cm}\\noindent \\textit{\\textbf{Consigne: }Pour chaque question, une seule réponse est exacte. Écrire la lettre correspondante $\\Downarrow$.}}\n\\n\\begin{document}\n\\pagestyle{empty}\n\n- Chaque sujet doit commencer par la balise \\enteteperso{Version}\n\\begin{enumerate}[label=\\textbf{Q\\arabic* :}]... liste des questions et finir par la balise\\newpage\n- La correction doit commencer par la balise \section*{Correction } et la balise \\noindent" 
+			},
             { 
-                id: 'CORRECTION', label: '✅ Générer la Correction', color: '#34495e', advice: "📁 Charger le sujet en tex ou pdf.",
+                id: 'CORRECTION', label: '✅ Générer la Correction', color: '#34495e', advice: "📁 Charger le sujet en tex encapsulé dans un zip ou au format pdf.",
                 content: "En tant qu'enseignant, rédige une correction en LaTeX, bien détaillée de tous les exercices de ce document compréhensible par les élèves de la classe de {{classe}}\n{{contrainte}}\n- Je ne veux aucune référence ou citation\n- Force un saut à la ligne après chaque question\n- N'utilise pas de balise subsection\n- Pour python utilise l'environnement verbatim\n- Je souhaite le code complet\n\n### STRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[preview,varwidth,margin=1.5cm]{standalone}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\newcommand{\\PhamN}{\\mbox{\\scalebox{1.5}[1]{P}\\kern-0.6em\\raisebox{0ex}[0pt][0pt]{\\fontsize{6}{6}\\selectfont ham}\n\\kern-0.5em\\scalebox{1.5}[1]{N}}}\n\\title{\\textbf{Correction du {{titre}} : {{theme}}}}\n\\author{\\PhamN}\n\\date{}\n\n\\begin{document}\n\\maketitle\n\n... Insère ici la correction bien détaillée de tous les exercices ...\n\n\\end{document}" 
+            },
+            { 
+                id: 'BIS', label: '🔄 Générer une version alternative', color: '#ff7675', advice: "🆔 Tu peux aussi demander la correction détaillée étape par étape.",
+                content: "En tant qu'enseignant, inspire-toi du document fourni pour proposer une version alternative en LaTeX (Version Bis).\nL'objectif est de proposer des activités de difficultés identiques pour le niveau {{classe}}.\n{{contrainte}}\n{{no_python}}\n\n### STRUCTURE DU CONTENU :\n- Identique au document fourni.\n- Respecte exactement la même pagination.\n- Je ne veux aucune référence ou citation.\n- N'utilise pas de balise subsection\n- Je souhaite le code complet au format .tex.\n\n### STRUCTURE DE MISE EN PAGE à respecter scrupuleusement:\n\\documentclass[12pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[french]{babel}\n\\usepackage{amsmath, amssymb, eurosym, amsfonts, amsthm, geometry, enumerate, enumitem, tabularx, eurosym, tikz,tkz-tab,multicol}\n\\geometry{margin=1.5cm}" 
             }
         ]
     };
 
-    window.onload = () => { renderApp(); };
+    window.onload = () => {
+        const saved = localStorage.getItem('gpp_vfinal');
+        if(saved) config = JSON.parse(saved);
+        renderApp();
+    };
+
+    function resetConfig() {
+        if(confirm("Attention : Cela va supprimer vos personnalisations et charger les réglages définis dans le code source HTML. Continuer ?")) {
+            localStorage.removeItem('gpp_vfinal');
+            location.reload();
+        }
+    }
 
     function renderApp() {
         const group = document.getElementById('main-button-group');
@@ -122,12 +171,45 @@
             btn.onclick = () => genererPrompt(p.id);
             group.appendChild(btn);
         });
+        renderSettings();
+    }
+
+    function renderSettings() {
+        const list = document.getElementById('config-list');
+        list.innerHTML = '';
+        config.prompts.forEach((p, index) => {
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div class="config-button-item" onclick="toggleDetails(${index})">
+                    <span>${p.label}</span> <span>▼</span>
+                </div>
+                <div id="details-${index}" class="config-details">
+                    <label>Nom affiché :</label>
+                    <input type="text" value="${p.label}" onchange="updatePrompt(${index}, 'label', this.value)">
+                    <label style="margin-top:10px;">Couleur :</label>
+                    <input type="color" value="${p.color}" onchange="updatePrompt(${index}, 'color', this.value)" style="height:40px;">
+                    <label style="margin-top:10px;">Prompt :</label>
+                    <textarea rows="8" onchange="updatePrompt(${index}, 'content', this.value)" style="font-size:11px;">${p.content}</textarea>
+                    <label style="margin-top:10px;">Conseil :</label>
+                    <input type="text" value="${p.advice}" onchange="updatePrompt(${index}, 'advice', this.value)">
+                    <button onclick="deletePrompt(${index})" style="color:#e74c3c; background:none; border:1px solid #fab1a0; margin-top:15px; padding:5px; border-radius:4px; cursor:pointer;">🗑 Supprimer</button>
+                </div>
+            `;
+            list.appendChild(container);
+        });
+    }
+
+    function toggleDetails(idx) {
+        const el = document.getElementById(`details-${idx}`);
+        const isOpen = el.classList.contains('open');
+        document.querySelectorAll('.config-details').forEach(d => d.classList.remove('open'));
+        if(!isOpen) el.classList.add('open');
     }
 
     function genererPrompt(id) {
         const p = config.prompts.find(x => x.id === id);
         let text = p.content;
-        
+
         const values = {
             titre: document.getElementById('titre').value || "Titre",
             classe: document.getElementById('classe').value,
@@ -142,7 +224,7 @@
         });
 
         document.getElementById('result').value = text;
-        
+
         const advEl = document.getElementById('advice-display');
         if(p.advice) {
             let adviceFinal = p.advice;
@@ -152,12 +234,18 @@
         } else {
             advEl.style.display = 'none';
         }
-        
+
         copyToClipboard();
     }
 
-    function showInfo() {
-        alert("📌 Informations Enseignant :\n\n- Établissement : Lycée Général de Bègles (33) / Václav Havel.\n- Niveaux : 2nde, 1ère (Spé/ST2S), Term (Spé/Compl/ST2S).\n- SNT : Programmation Python.\n- Formatage : Export systématique en LaTeX.\n- Organisation : Semestres (2nde/1ère) et Trimestres (Terminale).");
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+    function save() { localStorage.setItem('gpp_vfinal', JSON.stringify(config)); renderApp(); }
+    function updatePrompt(idx, key, val) { config.prompts[idx][key] = val; save(); }
+    function deletePrompt(idx) { if(confirm("Supprimer ?")) { config.prompts.splice(idx, 1); save(); } }
+    
+    function addPromptConfig() {
+        config.prompts.push({ id: 'ID'+Date.now(), label: 'Nouveau', color: '#95a5a6', advice: '', content: '...' });
+        save();
     }
 
     function copyToClipboard() {
@@ -172,6 +260,24 @@
     function copyAndOpenGemini() {
         copyToClipboard();
         window.open('https://gemini.google.com/app', '_blank');
+    }
+
+    function exportConfig() {
+        const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config));
+        const a = document.createElement('a');
+        a.href = data; a.download = "config_GPP.json"; a.click();
+    }
+
+    function importConfig(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                config = JSON.parse(ev.target.result);
+                save();
+                alert("Import réussi !");
+            } catch(err) { alert("Erreur."); }
+        };
+        reader.readAsText(e.target.files[0]);
     }
 </script>
 </body>
